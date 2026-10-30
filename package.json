@@ -2,6 +2,7 @@
   "name": "klangbild",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Browser extension for Firefox and Chrome for editing audio and video on websites in real time",
   "scripts": {
     "build": "node scripts/build.mjs",

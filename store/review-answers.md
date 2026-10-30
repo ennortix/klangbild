@@ -31,7 +31,7 @@ Copy these into the corresponding fields. They match what the code actually does
 - **Distribution:** "On this site" (listed on addons.mozilla.org)
 - **Source code:** Not required. The package contains the unmodified source files; the build step (`scripts/build.mjs`) only copies `src/` and adds the browser's manifest – no minification, bundling or transpiling.
 - **Data collection:** declared in the manifest as `"data_collection_permissions": { "required": ["none"] }`.
-- **License:** your choice (e.g. MIT if the code may be reused, or "All rights reserved").
+- **License:** MIT (see `LICENSE`)
 
 **Notes to reviewer** (paste into "Notes for Reviewers"):
 

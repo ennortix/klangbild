@@ -124,3 +124,7 @@ src/
 │   └── icons.js      Inline SVG icons
 └── icons/            SVG (Firefox) and PNG (Chrome) icons
 ```
+
+## License
+
+[MIT](LICENSE)

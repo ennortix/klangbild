@@ -24,7 +24,7 @@ Copy these into the corresponding fields. They match what the code actually does
 - I do not use or transfer user data for purposes that are unrelated to my item's single purpose
 - I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Privacy policy URL:** the public address where you publish `privacy-policy.md` (see README).
+**Privacy policy URL:** https://ennortix.github.io/klangbild/privacy.html
 
 ## Firefox Add-ons (AMO) – submission
 

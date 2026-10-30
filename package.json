@@ -1,0 +1,19 @@
+{
+  "name": "klangbild",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension for Firefox and Chrome for editing audio and video on websites in real time",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "start": "node scripts/build.mjs firefox && web-ext run --source-dir dist/firefox --start-url https://www.youtube.com",
+    "start:chrome": "node scripts/build.mjs chrome && web-ext run --target chromium --source-dir dist/chrome --start-url https://www.youtube.com",
+    "lint": "node scripts/build.mjs firefox && web-ext lint --source-dir dist/firefox",
+    "package": "node scripts/build.mjs && web-ext build --source-dir dist/firefox --artifacts-dir web-ext-artifacts --filename klangbild-firefox-{version}.zip --overwrite-dest && web-ext build --source-dir dist/chrome --artifacts-dir web-ext-artifacts --filename klangbild-chrome-{version}.zip --overwrite-dest",
+    "store-assets": "node scripts/store-assets.cjs"
+  },
+  "devDependencies": {
+    "web-ext": "^8.3.0",
+    "puppeteer-core": "^24.0.0"
+  }
+}

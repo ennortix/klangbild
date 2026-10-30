@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Klangbild</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="../icons/icon.svg" alt="" width="20" height="20" />
+        <span>Klangbild</span>
+      </div>
+      <label class="switch" title="All effects on/off (A/B comparison)">
+        <input type="checkbox" id="enabled" />
+        <span class="track"></span>
+      </label>
+    </header>
+
+    <p id="status" class="status">Connecting …</p>
+
+    <nav id="tabs" role="tablist"></nav>
+    <main id="panels"></main>
+
+    <footer>
+      <label class="check">
+        <input type="checkbox" id="siteSave" />
+        <span>Remember for <b id="host">this site</b></span>
+      </label>
+      <button id="resetAll" type="button">Reset all</button>
+    </footer>
+
+    <script src="../common.js"></script>
+    <script src="dom.js"></script>
+    <script src="icons.js"></script>
+    <script src="spectrum.js"></script>
+    <script src="presets.js"></script>
+    <script src="tools.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

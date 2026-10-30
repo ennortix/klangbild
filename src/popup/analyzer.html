@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Klangbild – System Audio Analyzer</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="analyzer">
+    <header>
+      <div class="brand">
+        <img src="../icons/icon.svg" alt="" width="20" height="20" />
+        <span>System Audio Analyzer</span>
+      </div>
+    </header>
+
+    <p class="status">
+      Analyzes everything your computer plays – any tab or app, including copy-protected streams. Nothing is recorded or saved.
+    </p>
+
+    <main id="view"></main>
+
+    <section class="panel active" id="sources"></section>
+
+    <script src="../common.js"></script>
+    <script src="dom.js"></script>
+    <script src="icons.js"></script>
+    <script src="spectrum.js"></script>
+    <script src="analyzer.js"></script>
+  </body>
+</html>

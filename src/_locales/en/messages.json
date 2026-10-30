@@ -1,0 +1,398 @@
+{
+  "extName": {
+    "message": "Klangbild – Live Audio & Video Editing"
+  },
+  "extDescription": {
+    "message": "Edit audio and video on any website in real time: speed, A/V sync, equalizer, volume boost, picture filters and more."
+  },
+  "cmdOpen": {
+    "message": "Open the Klangbild panel"
+  },
+  "cmdSpeedUp": {
+    "message": "Faster (+0.25×)"
+  },
+  "cmdSpeedDown": {
+    "message": "Slower (−0.25×)"
+  },
+  "cmdDelayUp": {
+    "message": "Audio delay +10 ms"
+  },
+  "cmdDelayDown": {
+    "message": "Audio delay −10 ms"
+  },
+  "cmdToggleFx": {
+    "message": "All effects on/off"
+  },
+  "cmdLoop": {
+    "message": "A-B loop: set A → set B → off"
+  },
+  "cmdScreenshot": {
+    "message": "Save a screenshot of the video"
+  },
+  "toggleAllTitle": {
+    "message": "All effects on/off (A/B comparison)"
+  },
+  "connecting": {
+    "message": "Connecting …"
+  },
+  "rememberFor": {
+    "message": "Remember for $1"
+  },
+  "thisSite": {
+    "message": "this site"
+  },
+  "resetAll": {
+    "message": "Reset all"
+  },
+  "reset": {
+    "message": "reset"
+  },
+  "mediaFoundOne": {
+    "message": "1 media element found – changes apply instantly."
+  },
+  "mediaFoundMany": {
+    "message": "$1 media elements found – changes apply instantly."
+  },
+  "ready": {
+    "message": "Ready – changes apply to all video/audio in this tab (including embedded players)."
+  },
+  "notAvailable": {
+    "message": "Not available on this page (e.g. about: pages or addons.mozilla.org)."
+  },
+  "statusAudioBlocked": {
+    "message": "Audio effects blocked – probably after an extension update. Please reload the page."
+  },
+  "statusDrmSilent": {
+    "message": "A copy-protected video was routed through Web Audio and is now silent – please reload the page."
+  },
+  "statusDrm": {
+    "message": "Copy-protected video (DRM): audio effects don't work here – speed and video filters do."
+  },
+  "tabPlayback": {
+    "message": "Playback"
+  },
+  "tabAudio": {
+    "message": "Audio"
+  },
+  "tabVideo": {
+    "message": "Video"
+  },
+  "tabExtras": {
+    "message": "Extras"
+  },
+  "speed": {
+    "message": "Speed"
+  },
+  "audioDelay": {
+    "message": "Audio delay"
+  },
+  "audioDelayHint": {
+    "message": "Positive: sound is early → the sound is delayed. Negative: sound is late (e.g. Bluetooth) → the picture is delayed."
+  },
+  "preservePitch": {
+    "message": "Preserve pitch"
+  },
+  "analyzer": {
+    "message": "Analyzer"
+  },
+  "volume": {
+    "message": "Volume"
+  },
+  "balance": {
+    "message": "Balance (L ↔ R)"
+  },
+  "equalizer": {
+    "message": "Equalizer"
+  },
+  "bass": {
+    "message": "Bass (200 Hz)"
+  },
+  "mids": {
+    "message": "Mids (1 kHz)"
+  },
+  "treble": {
+    "message": "Treble (4 kHz)"
+  },
+  "mono": {
+    "message": "Mono"
+  },
+  "enhanceVoice": {
+    "message": "Enhance voice"
+  },
+  "compressor": {
+    "message": "Compressor"
+  },
+  "limiter": {
+    "message": "Limiter"
+  },
+  "color": {
+    "message": "Color"
+  },
+  "brightness": {
+    "message": "Brightness"
+  },
+  "contrast": {
+    "message": "Contrast"
+  },
+  "saturation": {
+    "message": "Saturation"
+  },
+  "hue": {
+    "message": "Hue"
+  },
+  "effects": {
+    "message": "Effects"
+  },
+  "sharpness": {
+    "message": "Sharpness"
+  },
+  "blur": {
+    "message": "Blur"
+  },
+  "grayscale": {
+    "message": "Grayscale"
+  },
+  "sepia": {
+    "message": "Sepia"
+  },
+  "invert": {
+    "message": "Invert"
+  },
+  "geometry": {
+    "message": "Geometry"
+  },
+  "zoom": {
+    "message": "Zoom"
+  },
+  "flipH": {
+    "message": "Flip horizontally"
+  },
+  "flipV": {
+    "message": "Flip vertically"
+  },
+  "rotate": {
+    "message": "Rotate"
+  },
+  "presets": {
+    "message": "Presets"
+  },
+  "tools": {
+    "message": "Tools"
+  },
+  "shortcuts": {
+    "message": "Keyboard shortcuts"
+  },
+  "preset_voice": {
+    "message": "Clear speech"
+  },
+  "preset_night": {
+    "message": "Night mode"
+  },
+  "preset_bass": {
+    "message": "Bass boost"
+  },
+  "preset_cinema": {
+    "message": "Cinema"
+  },
+  "preset_vivid": {
+    "message": "Vivid colors"
+  },
+  "preset_eyes": {
+    "message": "Easy on the eyes"
+  },
+  "customPresets": {
+    "message": "Custom presets"
+  },
+  "presetNamePlaceholder": {
+    "message": "Name the current settings …"
+  },
+  "presetDefaultName": {
+    "message": "Preset $1"
+  },
+  "noCustomPresets": {
+    "message": "No custom presets yet."
+  },
+  "save": {
+    "message": "Save"
+  },
+  "delete": {
+    "message": "Delete"
+  },
+  "toolsDrmNote": {
+    "message": "Copy-protected video (DRM): screenshot, analyzer, audio effects and picture delay aren't possible here. Speed, video filters, loop and frame stepping work."
+  },
+  "noMediaPlaying": {
+    "message": "No video/audio found – is anything playing yet?"
+  },
+  "noMedia": {
+    "message": "No video/audio found"
+  },
+  "paused": {
+    "message": "paused"
+  },
+  "playing": {
+    "message": "playing"
+  },
+  "noLoop": {
+    "message": "No loop active."
+  },
+  "loopASet": {
+    "message": "A = $1 – now set B."
+  },
+  "loopRepeating": {
+    "message": "Repeating $1 → $2"
+  },
+  "frameBack": {
+    "message": "Back"
+  },
+  "playPause": {
+    "message": "Play/Pause"
+  },
+  "frameFwd": {
+    "message": "Forward"
+  },
+  "abLoop": {
+    "message": "A-B loop"
+  },
+  "setA": {
+    "message": "Set A"
+  },
+  "setB": {
+    "message": "Set B"
+  },
+  "off": {
+    "message": "Off"
+  },
+  "screenshot": {
+    "message": "Screenshot"
+  },
+  "saveFrame": {
+    "message": "Save frame (PNG)"
+  },
+  "openPanel": {
+    "message": "Open panel"
+  },
+  "changeShortcuts": {
+    "message": "Change shortcuts"
+  },
+  "startAnalyzer": {
+    "message": "Start analyzer"
+  },
+  "systemAudio": {
+    "message": "System audio"
+  },
+  "drmVideo": {
+    "message": "Copy-protected video (DRM)"
+  },
+  "noAudioEffect": {
+    "message": "No audio effect active yet."
+  },
+  "drmAnalyzeHint": {
+    "message": "The page's audio isn't available – analyze what your speakers play instead."
+  },
+  "webAudioHint": {
+    "message": "Routes the sound through Web Audio – media from other servers may go silent."
+  },
+  "analyzerWindowTitle": {
+    "message": "Klangbild – System Audio Analyzer"
+  },
+  "analyzerTitle": {
+    "message": "System Audio Analyzer"
+  },
+  "analyzerIntro": {
+    "message": "Analyzes everything your computer plays – any tab or app, including copy-protected streams. Nothing is recorded or saved."
+  },
+  "chooseSource": {
+    "message": "Choose a source below."
+  },
+  "noSourceStarted": {
+    "message": "No source started."
+  },
+  "permissionDenied": {
+    "message": "Permission was denied or the dialog was closed."
+  },
+  "sourceNoAudio": {
+    "message": "The shared source has no audio."
+  },
+  "shareDialogHint": {
+    "message": "In the dialog choose \"Entire screen\" and tick \"Also share system audio\"."
+  },
+  "sourceStopped": {
+    "message": "Source stopped."
+  },
+  "stop": {
+    "message": "Stop"
+  },
+  "stopped": {
+    "message": "Stopped."
+  },
+  "shareSystemAudio": {
+    "message": "Share system audio"
+  },
+  "systemAudioChrome": {
+    "message": "System audio (Chrome, Windows)"
+  },
+  "loopbackDevice": {
+    "message": "Loopback input device"
+  },
+  "listen": {
+    "message": "Listen"
+  },
+  "inputN": {
+    "message": "Input $1"
+  },
+  "loopbackHint": {
+    "message": "Needs a device that returns your speaker output, e.g. \"Stereo Mix\" (Sound settings → Recording → show disabled devices) or the free virtual cable VB-CABLE. Device names appear after the first start."
+  },
+  "loopA": {
+    "message": "Loop: A = $1"
+  },
+  "loopAB": {
+    "message": "Loop: $1 → $2"
+  },
+  "loopOff": {
+    "message": "Loop off"
+  },
+  "frameAt": {
+    "message": "Frame $1"
+  },
+  "drmProtected": {
+    "message": "Copy-protected (DRM)"
+  },
+  "drmNoScreenshot": {
+    "message": "Copy-protected (DRM) – screenshot not possible"
+  },
+  "noFrame": {
+    "message": "No video frame available"
+  },
+  "screenshotNotAllowed": {
+    "message": "Screenshot not allowed here (copy protection or foreign source)"
+  },
+  "screenshotSaved": {
+    "message": "Screenshot saved"
+  },
+  "audioBlockedReload": {
+    "message": "Audio blocked – reload the page"
+  },
+  "noMediaData": {
+    "message": "No media data yet – start playback first"
+  },
+  "osdSpeed": {
+    "message": "Speed $1×"
+  },
+  "avOffsetZero": {
+    "message": "A/V offset 0 ms"
+  },
+  "audioDelayedBy": {
+    "message": "Audio delayed by $1 ms"
+  },
+  "pictureDelayedBy": {
+    "message": "Picture delayed by $1 ms"
+  },
+  "effectsOn": {
+    "message": "Effects on"
+  },
+  "effectsOff": {
+    "message": "Effects off"
+  }
+}

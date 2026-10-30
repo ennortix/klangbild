@@ -8,28 +8,27 @@ function renderTools() {
   const drmNote = el("div", {
     className: "notice",
     hidden: true,
-    textContent:
-      "Copy-protected video (DRM): screenshot, analyzer, audio effects and picture delay aren't possible here. Speed, video filters, loop and frame stepping work.",
+    textContent: t("toolsDrmNote"),
   });
 
   function showState(st) {
     drmNote.hidden = !st?.drm;
     if (!st) {
-      position.textContent = "No video/audio found – is anything playing yet?";
+      position.textContent = t("noMediaPlaying");
       loopInfo.textContent = "";
       return;
     }
-    position.textContent = `${formatTime(st.time)} / ${formatTime(st.duration)} · ${st.paused ? "paused" : "playing"}`;
-    if (st.loopA === null) loopInfo.textContent = "No loop active.";
-    else if (st.loopB === null) loopInfo.textContent = `A = ${formatTime(st.loopA)} – now set B.`;
-    else loopInfo.textContent = `Repeating ${formatTime(st.loopA)} → ${formatTime(st.loopB)}`;
+    position.textContent = `${formatTime(st.time)} / ${formatTime(st.duration)} · ${t(st.paused ? "paused" : "playing")}`;
+    if (st.loopA === null) loopInfo.textContent = t("noLoop");
+    else if (st.loopB === null) loopInfo.textContent = t("loopASet", formatTime(st.loopA));
+    else loopInfo.textContent = t("loopRepeating", formatTime(st.loopA), formatTime(st.loopB));
   }
 
   async function run(action, extra = {}) {
     const r = await sendToPrimary({ type: "action", action, ...extra });
     showState(r?.state);
     if (action === "state") return;
-    message.textContent = r?.text ?? (r ? "" : "No video/audio found");
+    message.textContent = r?.text ?? (r ? "" : t("noMedia"));
     message.classList.toggle("error", !r?.ok);
   }
 
@@ -51,21 +50,21 @@ function renderTools() {
     el(
       "div",
       { className: "toggles" },
-      btn("frameBack", "Back", "frame", { dir: -1 }),
-      btn("playPause", "Play/Pause", "play"),
-      btn("frameFwd", "Forward", "frame", { dir: 1 })
+      btn("frameBack", t("frameBack"), "frame", { dir: -1 }),
+      btn("playPause", t("playPause"), "play"),
+      btn("frameFwd", t("frameFwd"), "frame", { dir: 1 })
     ),
-    el("div", { className: "group-title" }, icon("loop"), "A-B loop"),
+    el("div", { className: "group-title" }, icon("loop"), t("abLoop")),
     el(
       "div",
       { className: "toggles" },
-      btn("loop", "Set A", "loop-a"),
-      btn("loop", "Set B", "loop-b"),
-      btn("reset", "Off", "loop-clear")
+      btn("loop", t("setA"), "loop-a"),
+      btn("loop", t("setB"), "loop-b"),
+      btn("reset", t("off"), "loop-clear")
     ),
     loopInfo,
-    el("div", { className: "group-title" }, icon("camera"), "Screenshot"),
-    el("div", { className: "toggles" }, btn("camera", "Save frame (PNG)", "screenshot")),
+    el("div", { className: "group-title" }, icon("camera"), t("screenshot")),
+    el("div", { className: "toggles" }, btn("camera", t("saveFrame"), "screenshot")),
     message,
   ];
 }
@@ -78,7 +77,7 @@ function renderShortcuts() {
         el(
           "div",
           { className: "shortcut" },
-          el("span", { textContent: c.name === "_execute_action" ? "Open panel" : c.description }),
+          el("span", { textContent: c.name === "_execute_action" ? t("openPanel") : c.description }),
           el("kbd", { textContent: c.shortcut || "–" })
         )
       )
@@ -86,7 +85,7 @@ function renderShortcuts() {
   });
 
   // Firefox has openShortcutSettings(); in Chrome extensions may open the settings page.
-  const edit = el("button", { type: "button", className: "chip" }, icon("keyboard"), "Change shortcuts");
+  const edit = el("button", { type: "button", className: "chip" }, icon("keyboard"), t("changeShortcuts"));
   edit.addEventListener("click", () =>
     AVFX.IS_FIREFOX
       ? browser.commands.openShortcutSettings()

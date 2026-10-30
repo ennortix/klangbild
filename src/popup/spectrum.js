@@ -74,8 +74,8 @@ function openSystemAnalyzer() {
 
 function renderSpectrum() {
   const view = createSpectrumView();
-  const start = el("button", { type: "button", className: "chip" }, icon("spectrum"), "Start analyzer");
-  const system = el("button", { type: "button", className: "chip" }, icon("audio"), "System audio");
+  const start = el("button", { type: "button", className: "chip" }, icon("spectrum"), t("startAnalyzer"));
+  const system = el("button", { type: "button", className: "chip" }, icon("audio"), t("systemAudio"));
   const emptyText = el("span");
   const emptyNote = el("small");
   view.overlay.append(emptyText, el("div", { className: "toggles" }, start, system), emptyNote);
@@ -90,10 +90,8 @@ function renderSpectrum() {
     const live = Boolean(data?.bands);
     view.overlay.hidden = live;
     if (!live) {
-      emptyText.textContent = data?.drm ? "Copy-protected video (DRM)" : "No audio effect active yet.";
-      emptyNote.textContent = data?.drm
-        ? "The page's audio isn't available – analyze what your speakers play instead."
-        : "Routes the sound through Web Audio – media from other servers may go silent.";
+      emptyText.textContent = t(data?.drm ? "drmVideo" : "noAudioEffect");
+      emptyNote.textContent = t(data?.drm ? "drmAnalyzeHint" : "webAudioHint");
       start.hidden = Boolean(data?.drm);
     }
     view.draw(live ? data : null);

@@ -1,0 +1,398 @@
+{
+  "extName": {
+    "message": "Klangbild – Live-Audio- & Videobearbeitung"
+  },
+  "extDescription": {
+    "message": "Bearbeite Ton und Bild auf jeder Website in Echtzeit: Tempo, A/V-Sync, Equalizer, Lautstärke-Boost, Bildfilter und mehr."
+  },
+  "cmdOpen": {
+    "message": "Klangbild-Panel öffnen"
+  },
+  "cmdSpeedUp": {
+    "message": "Schneller (+0,25×)"
+  },
+  "cmdSpeedDown": {
+    "message": "Langsamer (−0,25×)"
+  },
+  "cmdDelayUp": {
+    "message": "Tonverzögerung +10 ms"
+  },
+  "cmdDelayDown": {
+    "message": "Tonverzögerung −10 ms"
+  },
+  "cmdToggleFx": {
+    "message": "Alle Effekte an/aus"
+  },
+  "cmdLoop": {
+    "message": "A-B-Schleife: A setzen → B setzen → aus"
+  },
+  "cmdScreenshot": {
+    "message": "Screenshot des Videos speichern"
+  },
+  "toggleAllTitle": {
+    "message": "Alle Effekte an/aus (A/B-Vergleich)"
+  },
+  "connecting": {
+    "message": "Verbinde …"
+  },
+  "rememberFor": {
+    "message": "Für $1 merken"
+  },
+  "thisSite": {
+    "message": "diese Seite"
+  },
+  "resetAll": {
+    "message": "Alles zurücksetzen"
+  },
+  "reset": {
+    "message": "zurück"
+  },
+  "mediaFoundOne": {
+    "message": "1 Medienelement gefunden – Änderungen wirken sofort."
+  },
+  "mediaFoundMany": {
+    "message": "$1 Medienelemente gefunden – Änderungen wirken sofort."
+  },
+  "ready": {
+    "message": "Bereit – Änderungen gelten für alle Videos und Audios in diesem Tab (auch in eingebetteten Playern)."
+  },
+  "notAvailable": {
+    "message": "Auf dieser Seite nicht verfügbar (z. B. about:-Seiten oder addons.mozilla.org)."
+  },
+  "statusAudioBlocked": {
+    "message": "Audioeffekte blockiert – vermutlich nach einem Update der Erweiterung. Bitte lade die Seite neu."
+  },
+  "statusDrmSilent": {
+    "message": "Ein kopiergeschütztes Video wurde über Web Audio geleitet und ist jetzt stumm – bitte lade die Seite neu."
+  },
+  "statusDrm": {
+    "message": "Kopiergeschütztes Video (DRM): Audioeffekte funktionieren hier nicht – Tempo und Videofilter schon."
+  },
+  "tabPlayback": {
+    "message": "Wiedergabe"
+  },
+  "tabAudio": {
+    "message": "Audio"
+  },
+  "tabVideo": {
+    "message": "Video"
+  },
+  "tabExtras": {
+    "message": "Extras"
+  },
+  "speed": {
+    "message": "Tempo"
+  },
+  "audioDelay": {
+    "message": "Tonverzögerung"
+  },
+  "audioDelayHint": {
+    "message": "Positiv: Ton kommt zu früh → der Ton wird verzögert. Negativ: Ton kommt zu spät (z. B. Bluetooth) → das Bild wird verzögert."
+  },
+  "preservePitch": {
+    "message": "Tonhöhe beibehalten"
+  },
+  "analyzer": {
+    "message": "Analyse"
+  },
+  "volume": {
+    "message": "Lautstärke"
+  },
+  "balance": {
+    "message": "Balance (L ↔ R)"
+  },
+  "equalizer": {
+    "message": "Equalizer"
+  },
+  "bass": {
+    "message": "Bass (200 Hz)"
+  },
+  "mids": {
+    "message": "Mitten (1 kHz)"
+  },
+  "treble": {
+    "message": "Höhen (4 kHz)"
+  },
+  "mono": {
+    "message": "Mono"
+  },
+  "enhanceVoice": {
+    "message": "Stimme verstärken"
+  },
+  "compressor": {
+    "message": "Kompressor"
+  },
+  "limiter": {
+    "message": "Limiter"
+  },
+  "color": {
+    "message": "Farbe"
+  },
+  "brightness": {
+    "message": "Helligkeit"
+  },
+  "contrast": {
+    "message": "Kontrast"
+  },
+  "saturation": {
+    "message": "Sättigung"
+  },
+  "hue": {
+    "message": "Farbton"
+  },
+  "effects": {
+    "message": "Effekte"
+  },
+  "sharpness": {
+    "message": "Schärfe"
+  },
+  "blur": {
+    "message": "Weichzeichner"
+  },
+  "grayscale": {
+    "message": "Graustufen"
+  },
+  "sepia": {
+    "message": "Sepia"
+  },
+  "invert": {
+    "message": "Invertieren"
+  },
+  "geometry": {
+    "message": "Geometrie"
+  },
+  "zoom": {
+    "message": "Zoom"
+  },
+  "flipH": {
+    "message": "Horizontal spiegeln"
+  },
+  "flipV": {
+    "message": "Vertikal spiegeln"
+  },
+  "rotate": {
+    "message": "Drehen"
+  },
+  "presets": {
+    "message": "Presets"
+  },
+  "tools": {
+    "message": "Werkzeuge"
+  },
+  "shortcuts": {
+    "message": "Tastenkürzel"
+  },
+  "preset_voice": {
+    "message": "Klare Sprache"
+  },
+  "preset_night": {
+    "message": "Nachtmodus"
+  },
+  "preset_bass": {
+    "message": "Bass-Boost"
+  },
+  "preset_cinema": {
+    "message": "Kino"
+  },
+  "preset_vivid": {
+    "message": "Kräftige Farben"
+  },
+  "preset_eyes": {
+    "message": "Augenschonend"
+  },
+  "customPresets": {
+    "message": "Eigene Presets"
+  },
+  "presetNamePlaceholder": {
+    "message": "Aktuelle Einstellungen benennen …"
+  },
+  "presetDefaultName": {
+    "message": "Preset $1"
+  },
+  "noCustomPresets": {
+    "message": "Noch keine eigenen Presets."
+  },
+  "save": {
+    "message": "Speichern"
+  },
+  "delete": {
+    "message": "Löschen"
+  },
+  "toolsDrmNote": {
+    "message": "Kopiergeschütztes Video (DRM): Screenshot, Analyse, Audioeffekte und Bildverzögerung sind hier nicht möglich. Tempo, Videofilter, Schleife und Einzelbilder funktionieren."
+  },
+  "noMediaPlaying": {
+    "message": "Kein Video/Audio gefunden – läuft schon etwas?"
+  },
+  "noMedia": {
+    "message": "Kein Video/Audio gefunden"
+  },
+  "paused": {
+    "message": "pausiert"
+  },
+  "playing": {
+    "message": "läuft"
+  },
+  "noLoop": {
+    "message": "Keine Schleife aktiv."
+  },
+  "loopASet": {
+    "message": "A = $1 – jetzt B setzen."
+  },
+  "loopRepeating": {
+    "message": "Wiederholt $1 → $2"
+  },
+  "frameBack": {
+    "message": "Zurück"
+  },
+  "playPause": {
+    "message": "Play/Pause"
+  },
+  "frameFwd": {
+    "message": "Vor"
+  },
+  "abLoop": {
+    "message": "A-B-Schleife"
+  },
+  "setA": {
+    "message": "A setzen"
+  },
+  "setB": {
+    "message": "B setzen"
+  },
+  "off": {
+    "message": "Aus"
+  },
+  "screenshot": {
+    "message": "Screenshot"
+  },
+  "saveFrame": {
+    "message": "Bild speichern (PNG)"
+  },
+  "openPanel": {
+    "message": "Panel öffnen"
+  },
+  "changeShortcuts": {
+    "message": "Kürzel ändern"
+  },
+  "startAnalyzer": {
+    "message": "Analyse starten"
+  },
+  "systemAudio": {
+    "message": "Systemton"
+  },
+  "drmVideo": {
+    "message": "Kopiergeschütztes Video (DRM)"
+  },
+  "noAudioEffect": {
+    "message": "Noch kein Audioeffekt aktiv."
+  },
+  "drmAnalyzeHint": {
+    "message": "Der Ton der Seite ist nicht verfügbar – analysiere stattdessen, was deine Lautsprecher abspielen."
+  },
+  "webAudioHint": {
+    "message": "Leitet den Ton über Web Audio – Medien von anderen Servern können dabei stumm werden."
+  },
+  "analyzerWindowTitle": {
+    "message": "Klangbild – Systemton-Analyse"
+  },
+  "analyzerTitle": {
+    "message": "Systemton-Analyse"
+  },
+  "analyzerIntro": {
+    "message": "Analysiert alles, was dein Computer abspielt – jeden Tab und jede App, auch kopiergeschützte Streams. Nichts wird aufgenommen oder gespeichert."
+  },
+  "chooseSource": {
+    "message": "Wähle unten eine Quelle."
+  },
+  "noSourceStarted": {
+    "message": "Keine Quelle gestartet."
+  },
+  "permissionDenied": {
+    "message": "Die Erlaubnis wurde verweigert oder der Dialog geschlossen."
+  },
+  "sourceNoAudio": {
+    "message": "Die geteilte Quelle hat keinen Ton."
+  },
+  "shareDialogHint": {
+    "message": "Wähle im Dialog „Gesamter Bildschirm“ und setze den Haken bei „Systemaudio teilen“."
+  },
+  "sourceStopped": {
+    "message": "Quelle beendet."
+  },
+  "stop": {
+    "message": "Stopp"
+  },
+  "stopped": {
+    "message": "Gestoppt."
+  },
+  "shareSystemAudio": {
+    "message": "Systemton teilen"
+  },
+  "systemAudioChrome": {
+    "message": "Systemton (Chrome, Windows)"
+  },
+  "loopbackDevice": {
+    "message": "Loopback-Eingabegerät"
+  },
+  "listen": {
+    "message": "Abhören"
+  },
+  "inputN": {
+    "message": "Eingang $1"
+  },
+  "loopbackHint": {
+    "message": "Braucht ein Gerät, das deine Lautsprecherausgabe zurückliefert, z. B. „Stereomix“ (Soundeinstellungen → Aufnahme → deaktivierte Geräte anzeigen) oder das kostenlose virtuelle Kabel VB-CABLE. Gerätenamen erscheinen nach dem ersten Start."
+  },
+  "loopA": {
+    "message": "Schleife: A = $1"
+  },
+  "loopAB": {
+    "message": "Schleife: $1 → $2"
+  },
+  "loopOff": {
+    "message": "Schleife aus"
+  },
+  "frameAt": {
+    "message": "Bild $1"
+  },
+  "drmProtected": {
+    "message": "Kopiergeschützt (DRM)"
+  },
+  "drmNoScreenshot": {
+    "message": "Kopiergeschützt (DRM) – kein Screenshot möglich"
+  },
+  "noFrame": {
+    "message": "Kein Videobild verfügbar"
+  },
+  "screenshotNotAllowed": {
+    "message": "Screenshot hier nicht erlaubt (Kopierschutz oder fremde Quelle)"
+  },
+  "screenshotSaved": {
+    "message": "Screenshot gespeichert"
+  },
+  "audioBlockedReload": {
+    "message": "Audio blockiert – Seite neu laden"
+  },
+  "noMediaData": {
+    "message": "Noch keine Mediendaten – erst die Wiedergabe starten"
+  },
+  "osdSpeed": {
+    "message": "Tempo $1×"
+  },
+  "avOffsetZero": {
+    "message": "A/V-Versatz 0 ms"
+  },
+  "audioDelayedBy": {
+    "message": "Ton um $1 ms verzögert"
+  },
+  "pictureDelayedBy": {
+    "message": "Bild um $1 ms verzögert"
+  },
+  "effectsOn": {
+    "message": "Effekte an"
+  },
+  "effectsOff": {
+    "message": "Effekte aus"
+  }
+}

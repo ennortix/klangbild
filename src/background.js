@@ -39,11 +39,9 @@ AVFX.onMessage((msg, sender) => {
 
 // ---------- Keyboard shortcuts ----------
 
-const fmtNumber = (v, digits) => v.toLocaleString("en-US", { maximumFractionDigits: digits });
-
 function delayText(ms) {
-  if (ms === 0) return "A/V offset 0 ms";
-  return ms > 0 ? `Audio delayed by ${ms} ms` : `Picture delayed by ${-ms} ms`;
+  if (ms === 0) return AVFX.t("avOffsetZero");
+  return ms > 0 ? AVFX.t("audioDelayedBy", ms) : AVFX.t("pictureDelayedBy", -ms);
 }
 
 // Returns [patch, osd text] for setting-changing commands.
@@ -51,7 +49,7 @@ function settingsCommand(command, s) {
   const { SPEED, MIN_DELAY_MS, MAX_DELAY_MS, clamp } = AVFX;
   const speed = (delta) => {
     const v = Math.round(clamp(s.speed + delta, SPEED.min, SPEED.max) * 100) / 100;
-    return [{ speed: v }, `Speed ${fmtNumber(v, 2)}×`];
+    return [{ speed: v }, AVFX.t("osdSpeed", AVFX.formatNumber(v, 2))];
   };
   const delay = (delta) => {
     const v = clamp(s.audioDelay + delta, MIN_DELAY_MS, MAX_DELAY_MS);
@@ -68,7 +66,7 @@ function settingsCommand(command, s) {
     case "delay-down":
       return delay(-10);
     case "toggle-fx":
-      return [{ enabled: !s.enabled }, s.enabled ? "Effects off" : "Effects on"];
+      return [{ enabled: !s.enabled }, AVFX.t(s.enabled ? "effectsOff" : "effectsOn")];
   }
   return null;
 }
@@ -82,7 +80,7 @@ async function handleCommand(command, tab) {
 
   if (command === "loop" || command === "screenshot") {
     if (!frame) {
-      osd("No video/audio found");
+      osd(AVFX.t("noMedia"));
       return;
     }
     const action = command === "loop" ? "loop-cycle" : "screenshot";

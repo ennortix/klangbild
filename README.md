@@ -45,6 +45,9 @@ Edits audio and video on any website in real time – YouTube, Twitch, media lib
 
 Every change made with a shortcut is briefly shown on top of the video.
 
+**Languages**
+- English and German – the panel, on-screen messages and shortcut names follow the browser's language. Texts live in `src/_locales/<lang>/messages.json`.
+
 **Controls**
 - Switch at the top right: all effects on/off (A/B comparison; speed is kept)
 - Double-clicking a slider name or clicking "reset" restores its default
@@ -116,6 +119,7 @@ src/
 ├── content.js        Finds <video>/<audio> and applies the effects
 ├── videodelay.js     Picture delay via canvas overlay (negative audio delay)
 ├── background.js     Site settings, keyboard shortcuts, screenshot download
+├── _locales/         UI texts (en, de)
 ├── popup/
 │   ├── popup.js      Sliders, tabs, state
 │   ├── spectrum.js   Live spectrum and level meter

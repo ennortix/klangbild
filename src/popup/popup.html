@@ -11,13 +11,13 @@
         <img src="../icons/icon.svg" alt="" width="20" height="20" />
         <span>Klangbild</span>
       </div>
-      <label class="switch" title="All effects on/off (A/B comparison)">
+      <label class="switch" data-i18n-title="toggleAllTitle">
         <input type="checkbox" id="enabled" />
         <span class="track"></span>
       </label>
     </header>
 
-    <p id="status" class="status">Connecting …</p>
+    <p id="status" class="status" data-i18n="connecting"></p>
 
     <nav id="tabs" role="tablist"></nav>
     <main id="panels"></main>
@@ -25,9 +25,9 @@
     <footer>
       <label class="check">
         <input type="checkbox" id="siteSave" />
-        <span>Remember for <b id="host">this site</b></span>
+        <span id="rememberFor"></span>
       </label>
-      <button id="resetAll" type="button">Reset all</button>
+      <button id="resetAll" type="button"><span data-i18n="resetAll"></span></button>
     </footer>
 
     <script src="../common.js"></script>

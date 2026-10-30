@@ -6,52 +6,52 @@ const SECTIONS = [
   {
     id: "playback",
     icon: "playback",
-    title: "Playback",
+    title: t("tabPlayback"),
     groups: [
       {
         controls: [
-          { key: "speed", icon: "speed", label: "Speed", ...AVFX.SPEED, unit: "×" },
+          { key: "speed", icon: "speed", label: t("speed"), ...AVFX.SPEED, unit: "×" },
           {
             key: "audioDelay",
             icon: "delay",
-            label: "Audio delay",
+            label: t("audioDelay"),
             min: AVFX.MIN_DELAY_MS,
             max: AVFX.MAX_DELAY_MS,
             step: 5,
             unit: "ms",
-            hint: "Positive: sound is early → the sound is delayed. Negative: sound is late (e.g. Bluetooth) → the picture is delayed.",
+            hint: t("audioDelayHint"),
           },
         ],
       },
-      { toggles: [{ key: "preservePitch", icon: "pitch", label: "Preserve pitch" }] },
+      { toggles: [{ key: "preservePitch", icon: "pitch", label: t("preservePitch") }] },
     ],
   },
   {
     id: "audio",
     icon: "audio",
-    title: "Audio",
+    title: t("tabAudio"),
     groups: [
-      { title: "Analyzer", icon: "spectrum", custom: renderSpectrum },
+      { title: t("analyzer"), icon: "spectrum", custom: renderSpectrum },
       {
         controls: [
-          { key: "volume", icon: "volume", label: "Volume", min: 0, max: 400, step: 1, unit: "%" },
-          { key: "pan", icon: "pan", label: "Balance (L ↔ R)", min: -100, max: 100, step: 1, unit: "" },
+          { key: "volume", icon: "volume", label: t("volume"), min: 0, max: 400, step: 1, unit: "%" },
+          { key: "pan", icon: "pan", label: t("balance"), min: -100, max: 100, step: 1, unit: "" },
         ],
       },
       {
-        title: "Equalizer", icon: "equalizer",
+        title: t("equalizer"), icon: "equalizer",
         controls: [
-          { key: "bass", icon: "bass", label: "Bass (200 Hz)", min: -15, max: 15, step: 0.5, unit: "dB" },
-          { key: "mid", icon: "mid", label: "Mids (1 kHz)", min: -15, max: 15, step: 0.5, unit: "dB" },
-          { key: "treble", icon: "treble", label: "Treble (4 kHz)", min: -15, max: 15, step: 0.5, unit: "dB" },
+          { key: "bass", icon: "bass", label: t("bass"), min: -15, max: 15, step: 0.5, unit: "dB" },
+          { key: "mid", icon: "mid", label: t("mids"), min: -15, max: 15, step: 0.5, unit: "dB" },
+          { key: "treble", icon: "treble", label: t("treble"), min: -15, max: 15, step: 0.5, unit: "dB" },
         ],
       },
       {
         toggles: [
-          { key: "mono", icon: "mono", label: "Mono" },
-          { key: "voice", icon: "voice", label: "Enhance voice" },
-          { key: "compressor", icon: "compressor", label: "Compressor" },
-          { key: "limiter", icon: "limiter", label: "Limiter" },
+          { key: "mono", icon: "mono", label: t("mono") },
+          { key: "voice", icon: "voice", label: t("enhanceVoice") },
+          { key: "compressor", icon: "compressor", label: t("compressor") },
+          { key: "limiter", icon: "limiter", label: t("limiter") },
         ],
       },
     ],
@@ -59,48 +59,48 @@ const SECTIONS = [
   {
     id: "video",
     icon: "video",
-    title: "Video",
+    title: t("tabVideo"),
     groups: [
       {
-        title: "Color", icon: "color",
+        title: t("color"), icon: "color",
         controls: [
-          { key: "brightness", icon: "brightness", label: "Brightness", min: 0, max: 300, step: 1, unit: "%" },
-          { key: "contrast", icon: "contrast", label: "Contrast", min: 0, max: 300, step: 1, unit: "%" },
-          { key: "saturate", icon: "saturate", label: "Saturation", min: 0, max: 300, step: 1, unit: "%" },
-          { key: "hue", icon: "hue", label: "Hue", min: 0, max: 360, step: 1, unit: "°" },
+          { key: "brightness", icon: "brightness", label: t("brightness"), min: 0, max: 300, step: 1, unit: "%" },
+          { key: "contrast", icon: "contrast", label: t("contrast"), min: 0, max: 300, step: 1, unit: "%" },
+          { key: "saturate", icon: "saturate", label: t("saturation"), min: 0, max: 300, step: 1, unit: "%" },
+          { key: "hue", icon: "hue", label: t("hue"), min: 0, max: 360, step: 1, unit: "°" },
         ],
       },
       {
-        title: "Effects", icon: "effects",
+        title: t("effects"), icon: "effects",
         controls: [
-          { key: "sharpen", icon: "sharpen", label: "Sharpness", min: 0, max: 100, step: 1, unit: "%" },
-          { key: "blur", icon: "blur", label: "Blur", min: 0, max: 10, step: 0.1, unit: "px" },
-          { key: "grayscale", icon: "grayscale", label: "Grayscale", min: 0, max: 100, step: 1, unit: "%" },
-          { key: "sepia", icon: "sepia", label: "Sepia", min: 0, max: 100, step: 1, unit: "%" },
-          { key: "invert", icon: "invert", label: "Invert", min: 0, max: 100, step: 1, unit: "%" },
+          { key: "sharpen", icon: "sharpen", label: t("sharpness"), min: 0, max: 100, step: 1, unit: "%" },
+          { key: "blur", icon: "blur", label: t("blur"), min: 0, max: 10, step: 0.1, unit: "px" },
+          { key: "grayscale", icon: "grayscale", label: t("grayscale"), min: 0, max: 100, step: 1, unit: "%" },
+          { key: "sepia", icon: "sepia", label: t("sepia"), min: 0, max: 100, step: 1, unit: "%" },
+          { key: "invert", icon: "invert", label: t("invert"), min: 0, max: 100, step: 1, unit: "%" },
         ],
       },
       {
-        title: "Geometry", icon: "geometry",
-        controls: [{ key: "zoom", icon: "zoom", label: "Zoom", min: 50, max: 300, step: 1, unit: "%" }],
+        title: t("geometry"), icon: "geometry",
+        controls: [{ key: "zoom", icon: "zoom", label: t("zoom"), min: 50, max: 300, step: 1, unit: "%" }],
       },
       {
         toggles: [
-          { key: "flipH", icon: "flipH", label: "Flip horizontally" },
-          { key: "flipV", icon: "flipV", label: "Flip vertically" },
+          { key: "flipH", icon: "flipH", label: t("flipH") },
+          { key: "flipV", icon: "flipV", label: t("flipV") },
         ],
       },
-      { choice: { key: "rotate", icon: "rotate", label: "Rotate", options: [0, 90, 180, 270], unit: "°" } },
+      { choice: { key: "rotate", icon: "rotate", label: t("rotate"), options: [0, 90, 180, 270], unit: "°" } },
     ],
   },
   {
     id: "extras",
     icon: "extras",
-    title: "Extras",
+    title: t("tabExtras"),
     groups: [
-      { title: "Presets", icon: "preset", custom: renderPresets },
-      { title: "Tools", icon: "tools", custom: renderTools },
-      { title: "Keyboard shortcuts", icon: "keyboard", custom: renderShortcuts },
+      { title: t("presets"), icon: "preset", custom: renderPresets },
+      { title: t("tools"), icon: "tools", custom: renderTools },
+      { title: t("shortcuts"), icon: "keyboard", custom: renderShortcuts },
     ],
   },
 ];
@@ -117,7 +117,7 @@ let activeSection = null;
 function renderRange(c) {
   const range = el("input", { type: "range", min: c.min, max: c.max, step: c.step });
   const num = el("input", { type: "number", min: c.min, max: c.max, step: c.step });
-  const reset = el("button", { type: "button", className: "reset", textContent: "reset" });
+  const reset = el("button", { type: "button", className: "reset", textContent: t("reset") });
   const row = el(
     "div",
     { className: "row" },
@@ -151,10 +151,10 @@ function renderRange(c) {
   return row;
 }
 
-function renderToggle(t) {
-  const chip = el("button", { type: "button", className: "chip" }, icon(t.icon), t.label);
-  chip.addEventListener("click", () => update({ [t.key]: !settings[t.key] }));
-  updaters.push(() => chip.setAttribute("aria-pressed", String(settings[t.key])));
+function renderToggle(toggle) {
+  const chip = el("button", { type: "button", className: "chip" }, icon(toggle.icon), toggle.label);
+  chip.addEventListener("click", () => update({ [toggle.key]: !settings[toggle.key] }));
+  updaters.push(() => chip.setAttribute("aria-pressed", String(settings[toggle.key])));
   return chip;
 }
 
@@ -265,11 +265,11 @@ let baseStatus = "";
 async function watchMediaStatus() {
   const f = await primaryFrame();
   if (f?.audioBlocked) {
-    setStatus("Audio effects blocked – probably after an extension update. Please reload the page.", true);
+    setStatus(t("statusAudioBlocked"), true);
   } else if (f?.drm && f.hasAudioChain) {
-    setStatus("A copy-protected video was routed through Web Audio and is now silent – please reload the page.", true);
+    setStatus(t("statusDrmSilent"), true);
   } else if (f?.drm) {
-    setStatus("Copy-protected video (DRM): audio effects don't work here – speed and video filters do.", true);
+    setStatus(t("statusDrm"), true);
   } else {
     setStatus(baseStatus);
   }
@@ -282,13 +282,20 @@ function setStatus(text, isError = false) {
   s.classList.toggle("error", isError);
 }
 
+// "Remember for <b>host</b>": the host's position in the sentence depends on the language.
+function renderRememberFor(text) {
+  const [before, after = ""] = t("rememberFor", "\u0000").split("\u0000");
+  $("rememberFor").replaceChildren(before, el("b", { textContent: text }), after);
+}
+
 async function init() {
+  localizePage();
   render();
 
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   tabId = tab?.id ?? null;
   host = tab?.url ? AVFX.hostOf(tab.url) : null;
-  $("host").textContent = host || "this site";
+  renderRememberFor(host || t("thisSite"));
   $("siteSave").disabled = !host;
 
   if (host) {
@@ -301,15 +308,12 @@ async function init() {
     const state = await AVFX.getTabState(tabId);
     settings = AVFX.sanitize(state.settings);
     const n = state.mediaCount;
-    baseStatus =
-      n > 0
-        ? `${n} media element${n === 1 ? "" : "s"} found – changes apply instantly.`
-        : "Ready – changes apply to all video/audio in this tab (including embedded players).";
+    baseStatus = n === 1 ? t("mediaFoundOne") : n > 1 ? t("mediaFoundMany", n) : t("ready");
     setStatus(baseStatus);
     watchMediaStatus();
   } catch {
     tabId = null;
-    setStatus("Not available on this page (e.g. about: pages or addons.mozilla.org).", true);
+    setStatus(t("notAvailable"), true);
     document.querySelectorAll("main input, main button, header input").forEach((i) => (i.disabled = true));
   }
   refresh();

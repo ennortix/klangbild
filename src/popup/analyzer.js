@@ -5,6 +5,8 @@
 // - Any browser: a loopback input device such as "Stereo Mix" or a virtual cable.
 // The analyser isn't connected to the speakers, so nothing is played back twice.
 
+localizePage();
+
 const view = createSpectrumView();
 $("view").append(...view.nodes);
 view.canvas.classList.add("tall");
@@ -38,19 +40,19 @@ async function start(getStream) {
   try {
     stream = await getStream();
   } catch (e) {
-    idle("No source started.", e.name === "NotAllowedError" ? "Permission was denied or the dialog was closed." : e.message);
+    idle(t("noSourceStarted"), e.name === "NotAllowedError" ? t("permissionDenied") : e.message);
     return;
   }
   stream.getVideoTracks().forEach((t) => t.stop());
   const track = stream.getAudioTracks()[0];
   if (!track) {
     stop();
-    idle("The shared source has no audio.", 'Choose "Entire screen" and tick "Also share system audio".');
+    idle(t("sourceNoAudio"), t("shareDialogHint"));
     return;
   }
   track.addEventListener("ended", () => {
     stop();
-    idle("Source stopped.");
+    idle(t("sourceStopped"));
   });
 
   audioCtx = new AudioContext();
@@ -72,10 +74,10 @@ async function start(getStream) {
 // ---------- Sources ----------
 
 const sources = $("sources");
-const stopBtn = el("button", { type: "button", className: "chip" }, icon("reset"), "Stop");
+const stopBtn = el("button", { type: "button", className: "chip" }, icon("reset"), t("stop"));
 stopBtn.addEventListener("click", () => {
   stop();
-  idle("Stopped.");
+  idle(t("stopped"));
 });
 
 function refreshButtons() {
@@ -83,7 +85,7 @@ function refreshButtons() {
 }
 
 if (!AVFX.IS_FIREFOX && navigator.mediaDevices.getDisplayMedia) {
-  const sys = el("button", { type: "button", className: "chip" }, icon("audio"), "Share system audio");
+  const sys = el("button", { type: "button", className: "chip" }, icon("audio"), t("shareSystemAudio"));
   sys.addEventListener("click", () =>
     start(() =>
       navigator.mediaDevices.getDisplayMedia({
@@ -94,14 +96,14 @@ if (!AVFX.IS_FIREFOX && navigator.mediaDevices.getDisplayMedia) {
     )
   );
   sources.append(
-    el("div", { className: "group-title" }, icon("audio"), "System audio (Chrome, Windows)"),
+    el("div", { className: "group-title" }, icon("audio"), t("systemAudioChrome")),
     el("div", { className: "toggles" }, sys),
-    el("div", { className: "hint", textContent: 'In the dialog choose "Entire screen" and tick "Also share system audio".' })
+    el("div", { className: "hint", textContent: t("shareDialogHint") })
   );
 }
 
 const deviceSelect = el("select", { className: "device-select" });
-const listen = el("button", { type: "button", className: "chip" }, icon("voice"), "Listen");
+const listen = el("button", { type: "button", className: "chip" }, icon("voice"), t("listen"));
 listen.addEventListener("click", () =>
   start(() =>
     navigator.mediaDevices.getUserMedia({
@@ -120,7 +122,7 @@ async function refreshDevices() {
   const selected = deviceSelect.value;
   const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audioinput");
   deviceSelect.replaceChildren(
-    ...inputs.map((d, i) => el("option", { value: d.deviceId, textContent: d.label || `Input ${i + 1}` }))
+    ...inputs.map((d, i) => el("option", { value: d.deviceId, textContent: d.label || t("inputN", i + 1) }))
   );
   // Preselect a loopback device when there is one.
   const loopback = inputs.find((d) => /stereo ?mix|stereomix|what u hear|cable output|loopback|voicemeeter/i.test(d.label));
@@ -128,17 +130,16 @@ async function refreshDevices() {
 }
 
 sources.append(
-  el("div", { className: "group-title" }, icon("voice"), "Loopback input device"),
+  el("div", { className: "group-title" }, icon("voice"), t("loopbackDevice")),
   el("div", { className: "preset-save" }, deviceSelect, listen),
   el("div", {
     className: "hint",
-    textContent:
-      'Needs a device that returns your speaker output, e.g. "Stereo Mix" (Sound settings → Recording → show disabled devices) or the free virtual cable VB-CABLE. Device names appear after the first start.',
+    textContent: t("loopbackHint"),
   }),
   el("div", { className: "toggles" }, stopBtn)
 );
 
 refreshButtons();
 refreshDevices();
-idle("Choose a source below.");
+idle(t("chooseSource"));
 window.addEventListener("pagehide", stop);

@@ -343,20 +343,20 @@
     const loop = loops.get(el);
     if (!loop) {
       setLoop(el, { a: el.currentTime, b: null });
-      return `Loop: A = ${formatTime(el.currentTime)}`;
+      return AVFX.t("loopA", formatTime(el.currentTime));
     }
     if (loop.b === null && el.currentTime > loop.a + 0.1) {
       setLoop(el, { a: loop.a, b: el.currentTime });
-      return `Loop: ${formatTime(loop.a)} → ${formatTime(el.currentTime)}`;
+      return AVFX.t("loopAB", formatTime(loop.a), formatTime(el.currentTime));
     }
     setLoop(el, null);
-    return "Loop off";
+    return AVFX.t("loopOff");
   }
 
   async function screenshot(el) {
-    if (isProtected(el)) return { ok: false, text: "Copy-protected (DRM) – screenshot not possible" };
+    if (isProtected(el)) return { ok: false, text: AVFX.t("drmNoScreenshot") };
     if (!(el instanceof HTMLVideoElement) || !el.videoWidth) {
-      return { ok: false, text: "No video frame available" };
+      return { ok: false, text: AVFX.t("noFrame") };
     }
     const canvas = document.createElement("canvas");
     canvas.width = el.videoWidth;
@@ -370,11 +370,11 @@
     try {
       dataUrl = canvas.toDataURL("image/png");
     } catch {
-      return { ok: false, text: "Screenshot not allowed here (copy protection or foreign source)" };
+      return { ok: false, text: AVFX.t("screenshotNotAllowed") };
     }
     const time = formatTime(el.currentTime).replace(/[:.]/g, "-");
     await browser.runtime.sendMessage({ type: "download", dataUrl, filename: `${location.hostname || "video"}_${time}.png` });
-    return { ok: true, text: "Screenshot saved" };
+    return { ok: true, text: AVFX.t("screenshotSaved") };
   }
 
   function toolState(el) {
@@ -394,7 +394,7 @@
 
   async function runAction(msg) {
     const el = primaryMedia()?.el;
-    if (!el) return { ok: false, text: "No video/audio found" };
+    if (!el) return { ok: false, text: AVFX.t("noMedia") };
 
     let text = null;
     switch (msg.action) {
@@ -405,7 +405,7 @@
       case "frame":
         el.pause();
         el.currentTime = AVFX.clamp(el.currentTime + msg.dir * FRAME_STEP, 0, el.duration || Infinity);
-        text = `Frame ${formatTime(el.currentTime)}`;
+        text = AVFX.t("frameAt", formatTime(el.currentTime));
         break;
       case "loop-a": {
         const b = loops.get(el)?.b;
@@ -426,10 +426,10 @@
       case "screenshot":
         return { ...(await screenshot(el)), state: toolState(el) };
       case "attach-audio":
-        if (isProtected(el)) return { ok: false, text: "Copy-protected (DRM)", state: toolState(el) };
+        if (isProtected(el)) return { ok: false, text: AVFX.t("drmProtected"), state: toolState(el) };
         applyAudio(el, effective(), true);
         if (!chains.has(el)) {
-          const text = audioBlocked.has(el) ? "Audio blocked – reload the page" : "No media data yet – start playback first";
+          const text = AVFX.t(audioBlocked.has(el) ? "audioBlockedReload" : "noMediaData");
           return { ok: false, text, state: toolState(el) };
         }
         break;

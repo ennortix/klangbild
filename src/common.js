@@ -24,6 +24,21 @@ globalThis.AVFX = {
     });
   },
 
+  // Text in the browser's UI language from _locales/. Falls back to the key, e.g.
+  // in a content script orphaned by an extension update.
+  t(key, ...subs) {
+    try {
+      return browser.i18n.getMessage(key, subs.map(String)) || key;
+    } catch {
+      return key;
+    }
+  },
+
+  // Formats numbers like the UI language, e.g. 1.25 → "1,25" in German.
+  formatNumber(v, digits) {
+    return v.toLocaleString(browser.i18n.getUILanguage(), { maximumFractionDigits: digits });
+  },
+
   DEFAULTS: Object.freeze({
     enabled: true,
 
@@ -66,14 +81,15 @@ globalThis.AVFX = {
   SPEED: { min: 0.25, max: 4, step: 0.05 },
 
   // Built-in presets. They reset all effects but keep speed and A/V sync,
-  // which depend on the content and the playback device, not on taste.
+  // which depend on the content and the playback device, not on taste. Names are
+  // the _locales/ messages preset_<id>.
   PRESETS: [
-    { id: "voice", name: "Clear speech", icon: "voice", patch: { voice: true, compressor: true, bass: -3, treble: 2 } },
-    { id: "night", name: "Night mode", icon: "night", patch: { compressor: true, limiter: true, bass: -6, volume: 130 } },
-    { id: "bass", name: "Bass boost", icon: "bass", patch: { bass: 9, mid: -1, limiter: true } },
-    { id: "cinema", name: "Cinema", icon: "video", patch: { bass: 4, treble: 3, contrast: 115, saturate: 115 } },
-    { id: "vivid", name: "Vivid colors", icon: "saturate", patch: { saturate: 140, contrast: 110, sharpen: 30 } },
-    { id: "eyes", name: "Easy on the eyes", icon: "brightness", patch: { brightness: 85, sepia: 30, contrast: 95 } },
+    { id: "voice", icon: "voice", patch: { voice: true, compressor: true, bass: -3, treble: 2 } },
+    { id: "night", icon: "night", patch: { compressor: true, limiter: true, bass: -6, volume: 130 } },
+    { id: "bass", icon: "bass", patch: { bass: 9, mid: -1, limiter: true } },
+    { id: "cinema", icon: "video", patch: { bass: 4, treble: 3, contrast: 115, saturate: 115 } },
+    { id: "vivid", icon: "saturate", patch: { saturate: 140, contrast: 110, sharpen: 30 } },
+    { id: "eyes", icon: "brightness", patch: { brightness: 85, sepia: 30, contrast: 95 } },
   ],
 
   PLAYBACK_KEYS: ["speed", "preservePitch", "audioDelay"],

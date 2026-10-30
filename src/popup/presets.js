@@ -7,27 +7,27 @@ function renderPresets() {
     "div",
     { className: "toggles" },
     ...AVFX.PRESETS.map((p) => {
-      const chip = el("button", { type: "button", className: "chip" }, icon(p.icon), p.name);
+      const chip = el("button", { type: "button", className: "chip" }, icon(p.icon), t(`preset_${p.id}`));
       chip.addEventListener("click", () => applyPreset(p.patch, { keepPlayback: true }));
       return chip;
     })
   );
 
   const list = el("div", { className: "preset-list" });
-  const name = el("input", { type: "text", placeholder: "Name the current settings …", maxLength: 40 });
-  const save = el("button", { type: "button", className: "chip" }, icon("save"), "Save");
+  const name = el("input", { type: "text", placeholder: t("presetNamePlaceholder"), maxLength: 40 });
+  const save = el("button", { type: "button", className: "chip" }, icon("save"), t("save"));
 
   const persist = () => browser.storage.local.set({ presets: userPresets });
 
   function renderList() {
     if (!userPresets.length) {
-      list.replaceChildren(el("div", { className: "hint", textContent: "No custom presets yet." }));
+      list.replaceChildren(el("div", { className: "hint", textContent: t("noCustomPresets") }));
       return;
     }
     list.replaceChildren(
       ...userPresets.map((p) => {
         const apply = el("button", { type: "button", className: "preset-apply" }, icon("preset"), p.name);
-        const del = el("button", { type: "button", className: "icon-btn", title: "Delete" }, icon("trash"));
+        const del = el("button", { type: "button", className: "icon-btn", title: t("delete") }, icon("trash"));
         apply.addEventListener("click", () => applyPreset(p.settings, { keepPlayback: false }));
         del.addEventListener("click", () => {
           userPresets = userPresets.filter((x) => x !== p);
@@ -40,7 +40,7 @@ function renderPresets() {
   }
 
   function saveCurrent() {
-    const label = name.value.trim() || `Preset ${userPresets.length + 1}`;
+    const label = name.value.trim() || t("presetDefaultName", userPresets.length + 1);
     const { enabled, ...values } = settings;
     userPresets = [...userPresets.filter((p) => p.name !== label), { name: label, settings: values }];
     persist();
@@ -60,7 +60,7 @@ function renderPresets() {
 
   return [
     builtins,
-    el("div", { className: "group-title" }, icon("save"), "Custom presets"),
+    el("div", { className: "group-title" }, icon("save"), t("customPresets")),
     list,
     el("div", { className: "preset-save" }, name, save),
   ];

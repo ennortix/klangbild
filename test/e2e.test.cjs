@@ -626,6 +626,7 @@ test("sidebar: a 200 px wide sidebar has no overlapping controls", { skip }, () 
           buttonsOverlap: buttons.some((b, i) => i && overlap(buttons[i - 1], b)),
           buttonsInside: buttons.every((b) => b.right <= 200),
           contentFits: [...document.querySelectorAll(".tl-btn")].every((b) => b.scrollWidth <= b.clientWidth + 1),
+          sizes: [...document.querySelectorAll(".tl-btn")].map((b) => `${b.textContent.trim() || b.getAttribute("aria-label") || "?"}:${b.scrollWidth}/${b.clientWidth}`).join(" "),
           footerOverlap: overlap(footer[0], footer[1]),
           sliderWidth: box(speed.querySelector("input[type=range]")).width,
         };
@@ -633,7 +634,7 @@ test("sidebar: a 200 px wide sidebar has no overlapping controls", { skip }, () 
       assert.ok(r.scroll <= 200, `page width ${r.scroll}`);
       assert.equal(r.buttonsOverlap, false, "timeline buttons overlap");
       assert.equal(r.buttonsInside, true);
-      assert.equal(r.contentFits, true, "timeline button content overflows");
+      assert.equal(r.contentFits, true, `timeline button content overflows: ${r.sizes}`);
       assert.equal(r.footerOverlap, false, "footer overlaps");
       assert.ok(r.sliderWidth > 120, `speed slider only ${r.sliderWidth} px`);
     } finally {

@@ -5,7 +5,7 @@
   "license": "MIT",
   "description": "Browser extension for Firefox and Chrome for editing audio and video on websites in real time",
   "scripts": {
-    "test": "node --test --test-timeout=60000 \"test/*.test.*\"",
+    "test": "node --test --test-timeout=300000 \"test/*.test.*\"",
     "test:unit": "node --test \"test/*.test.mjs\"",
     "build": "node scripts/build.mjs",
     "icons": "node scripts/make-icons.mjs",

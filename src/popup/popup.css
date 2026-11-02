@@ -790,11 +790,13 @@ footer[hidden],
     display: none;
   }
 
-  /* seven buttons of about 19 px: "−30" needs every pixel with wider fonts */
+  /* Seven buttons of about 19 px: "−30" is about 1.73 em wide with wider fonts (DejaVu
+     on Linux), so without side padding and at 10 px it fits. */
   .tl-btn {
     padding-left: 0;
     padding-right: 0;
-    font-size: 12px;
+    font-size: 10px;
+    letter-spacing: -0.2px;
   }
 
   .tl-buttons {

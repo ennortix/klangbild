@@ -790,6 +790,13 @@ footer[hidden],
     display: none;
   }
 
+  /* seven buttons of about 19 px: "−30" needs every pixel with wider fonts */
+  .tl-btn {
+    padding-left: 0;
+    padding-right: 0;
+    font-size: 12px;
+  }
+
   .tl-buttons {
     gap: 2px;
   }

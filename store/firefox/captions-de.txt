@@ -1,0 +1,4 @@
+Klang jedes Videos live formen
+Asynchronen Ton korrigieren, z. B. bei Bluetooth-Kopfhörern
+Besseres Bild mit einem Klick
+Presets, A-B-Schleife, Bild für Bild und Tastenkürzel

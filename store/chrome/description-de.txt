@@ -1,0 +1,49 @@
+Mit Klangbild bearbeitest du Ton und Bild jedes Videos und jeder Audiowiedergabe im Web – Videoplattformen, Streaming-Seiten, Mediatheken, Podcasts, eingebettete Player – live während der Wiedergabe.
+
+ASYNCHRONEN TON KORRIGIEREN
+• Ton verzögern, wenn er dem Bild vorausläuft
+• Bild verzögern, wenn der Ton hinterherhinkt, z. B. mit Bluetooth-Kopfhörern
+• In 5-ms-Schritten von −1000 bis +5000 ms
+
+KLANG FORMEN
+• Lautstärke-Boost bis 400 %
+• 3-Band-Equalizer (Bass, Mitten, Höhen)
+• Stimme ↔ Hintergrund: Sprache lauter als Musik und Effekte – oder umgekehrt
+• „Enhance voice“ für verständlichere Dialoge
+• Lautstärke angleichen: leise und laute Videos auf ähnlichem Pegel
+• Kompressor für gleichmäßige Lautstärke, Limiter gegen Verzerrungen
+• Balance, Stereobreite, Mono und Links/Rechts tauschen
+• Hall
+• Live-Spektrum und Pegelanzeige
+
+BILD VERBESSERN
+• Helligkeit, Kontrast, Sättigung, Farbton, Gamma und Farbtemperatur
+• Schärfe, Weichzeichner, Graustufen, Sepia, Invertieren
+• Farbsehschwäche-Korrektur bei Rot-, Grün- oder Blauschwäche
+• Zoomen, Verschieben, Spiegeln und Drehen
+• Ambilight: ein sanfter Schein in den Randfarben rund um das Bild
+
+WIEDERGABE-WERKZEUGE
+• Geschwindigkeit von 0,25× bis 4×, auf Wunsch mit gleicher Tonhöhe
+• Pausen überspringen: Sprechpausen in Vorträgen, Vorlesungen und Podcasts laufen schneller
+• Weiterschauen: längere Videos laufen dort weiter, wo du aufgehört hast
+• A-B-Schleife, Wiederholen, vor- und zurückspringen, Bild für Bild
+• Sleep-Timer, der sanft ausblendet und pausiert
+• Aktuelles Bild als PNG speichern
+
+BEQUEM
+• Presets: Clear speech, Night mode, Bass boost, Cinema, Vivid colors, Easy on the eyes – plus eigene
+• Einstellungen pro Website merken oder einen Standard für alle Websites festlegen
+• Regeln für Adressen: z. B. in einem Bereich einer Website immer 1,5×
+• Regler mit drei Ringen: den Punkt innen, in der Mitte oder außen anfassen und in Schritten von 1, 5 oder 10 verschieben – oder wie einen Drehknopf drehen
+• Tastenkürzel mit Einblendung im Video
+• Ein Schalter zum Vergleich mit und ohne Effekte
+• Sicherung aller Einstellungen in eine Datei
+• System-Audio-Analyzer: zeigt das Spektrum von allem, was dein Computer abspielt
+• Deutsch und Englisch, helles und dunkles Design
+
+DATENSCHUTZ
+Klangbild sammelt keine Daten, braucht kein Konto und baut keine Netzwerkverbindungen auf. Einstellungen, Presets und die Positionen für „Weiterschauen“ bleiben in deinem Browser – Positionen nur unter einem Hash der Adresse und nie aus privaten Fenstern.
+
+HINWEIS
+Kopiergeschützte (DRM-)Streams geben Ton und Bild nicht an Erweiterungen heraus. Dort funktionieren Geschwindigkeit, Bildfilter, Schleife und Bild-für-Bild, aber keine Audio-Effekte, keine Bildverzögerung, kein Ambilight und keine Screenshots. Der System-Audio-Analyzer kann ihr Spektrum trotzdem anzeigen.

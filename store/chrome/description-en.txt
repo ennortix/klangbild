@@ -1,0 +1,49 @@
+Klangbild lets you edit the sound and picture of any video or audio on the web – video platforms, streaming sites, media libraries, podcasts, embedded players – live while it plays.
+
+FIX OUT-OF-SYNC AUDIO
+• Delay the sound when it runs ahead of the picture
+• Delay the picture when the sound lags behind, e.g. with Bluetooth headphones
+• Adjustable in 5 ms steps from −1000 to +5000 ms
+
+SHAPE THE SOUND
+• Volume boost up to 400 %
+• 3-band equalizer (bass, mids, treble)
+• Voice ↔ background: make speech louder than music and effects, or the other way round
+• "Enhance voice" for clearer dialogue
+• Loudness leveling: quiet and loud videos at a similar level
+• Compressor for evenly loud playback, limiter against distortion
+• Balance, stereo width, mono and swapping left/right
+• Reverb
+• Live spectrum and level meter
+
+IMPROVE THE PICTURE
+• Brightness, contrast, saturation, hue, gamma and color temperature
+• Sharpness, blur, grayscale, sepia, invert
+• Color vision correction for red, green or blue weakness
+• Zoom, move, flip and rotate
+• Ambilight: a soft glow around the picture in the colors of its edges
+
+PLAYBACK TOOLS
+• Speed from 0.25× to 4×, optionally preserving pitch
+• Skip silence: pauses in talks, lectures and podcasts play faster
+• Continue watching: longer videos continue where you left off
+• A-B loop, repeat, jump back and forward, frame-by-frame stepping
+• Sleep timer that fades out and pauses
+• Save the current frame as PNG
+
+CONVENIENT
+• Presets: Clear speech, Night mode, Bass boost, Cinema, Vivid colors, Easy on the eyes – plus your own
+• Remember settings per website, or set a default for all websites
+• Rules for addresses: e.g. always 1.5× in one section of a site
+• Sliders with three rings: grab the thumb inside, in the middle or outside to move it in steps of 1, 5 or 10 – or turn it like a knob
+• Keyboard shortcuts with on-screen feedback
+• One switch to compare with and without effects
+• Backup of all settings to a file
+• System audio analyzer: shows the spectrum of everything your computer plays
+• English and German, light and dark design
+
+PRIVATE BY DESIGN
+Klangbild collects no data, has no account and makes no network requests. Settings, presets and the positions for "continue watching" are stored only in your browser – positions under a hash of the address, never from private windows.
+
+PLEASE NOTE
+Copy-protected (DRM) streams don't release their audio and picture to extensions. There speed, picture filters, loop and frame stepping work, but audio effects, the picture delay, ambilight and screenshots don't. The system audio analyzer can still show their spectrum.

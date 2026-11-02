@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # GitHub's Ubuntu runners ship Google Chrome; the end-to-end and Web Audio
+      # tests use it, without it they are skipped.
+      - run: npm test
+        env:
+          CHROME_PATH: /usr/bin/google-chrome

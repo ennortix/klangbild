@@ -14,7 +14,9 @@ function createSpectrumView() {
   const value = el("span", { className: "meter-value", textContent: "– dB" });
 
   const ctx = canvas.getContext("2d");
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  const style = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue("--accent").trim();
+  const accentLight = style.getPropertyValue("--accent-light").trim();
   const bars = new Float32Array(48);
   let peakHold = -Infinity;
   let peakAt = 0;
@@ -29,7 +31,7 @@ function createSpectrumView() {
       canvas.height = h;
       gradient = ctx.createLinearGradient(0, h, 0, 0);
       gradient.addColorStop(0, accent);
-      gradient.addColorStop(1, "#c3b9ff");
+      gradient.addColorStop(1, accentLight);
     }
     ctx.clearRect(0, 0, w, h);
 
@@ -91,7 +93,12 @@ function renderSpectrum() {
     view.overlay.hidden = live;
     if (!live) {
       emptyText.textContent = t(data?.drm ? "drmVideo" : "noAudioEffect");
-      emptyNote.textContent = t(data?.drm ? "drmAnalyzeHint" : "webAudioHint");
+      const note = t(data?.drm ? "drmAnalyzeHint" : "webAudioHint");
+      // The compact popup has no room for it: there it is the start button's tooltip.
+      emptyNote.textContent = IN_SIDEBAR ? note : "";
+      emptyNote.hidden = !IN_SIDEBAR;
+      start.title = note;
+      view.overlay.title = IN_SIDEBAR ? "" : note;
       start.hidden = Boolean(data?.drm);
     }
     view.draw(live ? data : null);

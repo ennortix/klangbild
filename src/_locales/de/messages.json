@@ -5,6 +5,9 @@
   "extDescription": {
     "message": "Bearbeite Ton und Bild auf jeder Website in Echtzeit: Tempo, A/V-Sync, Equalizer, Lautstärke-Boost, Bildfilter und mehr."
   },
+  "cmdSidebar": {
+    "message": "Klangbild in der Seitenleiste öffnen"
+  },
   "cmdOpen": {
     "message": "Klangbild-Panel öffnen"
   },
@@ -44,6 +47,24 @@
   "resetAll": {
     "message": "Alles zurücksetzen"
   },
+  "sliderMode": {
+    "message": "Regler"
+  },
+  "sliderModeHint": {
+    "message": "Die Ringe auf dem Punkt bestimmen die Schrittweite: innen angefasst ±1 (fein), Mitte ±5, außen ±10. Ziehen: seitlich entlang der Schiene wird der Punkt in diesen Schritten verschoben, nach oben/unten weggezogen und gekreist wird gedreht (im Uhrzeigersinn mehr). Drehen: Anfassen dreht immer."
+  },
+  "sliderDrag": {
+    "message": "Ziehen"
+  },
+  "sliderTurn": {
+    "message": "Drehen"
+  },
+  "sliderHintDrag": {
+    "message": "Innen angefasst ±1, Mitte ±5, außen ±10 · seitlich ziehen: in diesen Schritten verschieben · nach oben/unten wegziehen und kreisen: drehen · Doppelklick: zurücksetzen · Mausrad: ändern (Shift: 10 Schritte)"
+  },
+  "sliderHintTurn": {
+    "message": "Punkt wie einen Drehknopf drehen: innen angefasst ±1, Mitte ±5, außen ±10 – im Uhrzeigersinn mehr · Klick auf die Schiene: dorthin springen · Doppelklick: zurücksetzen · Mausrad: ändern (Shift: 10 Schritte)"
+  },
   "reset": {
     "message": "zurück"
   },
@@ -60,7 +81,7 @@
     "message": "Auf dieser Seite nicht verfügbar (z. B. about:-Seiten oder addons.mozilla.org)."
   },
   "statusAudioBlocked": {
-    "message": "Audioeffekte blockiert – vermutlich nach einem Update der Erweiterung. Bitte lade die Seite neu."
+    "message": "Audioeffekte blockiert – eine ältere Klangbild-Version hält den Ton dieser Seite noch fest (nach einem Update). Ein Neuladen gibt ihn frei."
   },
   "statusDrmSilent": {
     "message": "Ein kopiergeschütztes Video wurde über Web Audio geleitet und ist jetzt stumm – bitte lade die Seite neu."
@@ -124,6 +145,9 @@
   },
   "limiter": {
     "message": "Limiter"
+  },
+  "autoGain": {
+    "message": "Lautheitsausgleich"
   },
   "color": {
     "message": "Farbe"
@@ -394,5 +418,368 @@
   },
   "effectsOff": {
     "message": "Effekte aus"
+  },
+  "cmdSpeedReset": {
+    "message": "Geschwindigkeit zurücksetzen (1×)"
+  },
+  "cmdSeekBack": {
+    "message": "10 s zurückspringen"
+  },
+  "cmdSeekForward": {
+    "message": "10 s vorspringen"
+  },
+  "cmdVolumeUp": {
+    "message": "Lautstärke +10 %"
+  },
+  "cmdVolumeDown": {
+    "message": "Lautstärke −10 %"
+  },
+  "stereoWidth": {
+    "message": "Stereobreite"
+  },
+  "stereoWidthHint": {
+    "message": "0 %: mono, 100 %: original, 200 %: extra breit. Über 100 % ist der Limiter immer aktiv."
+  },
+  "swapChannels": {
+    "message": "L/R tauschen"
+  },
+  "gamma": {
+    "message": "Gamma"
+  },
+  "temperature": {
+    "message": "Farbtemperatur"
+  },
+  "temperatureHint": {
+    "message": "Negativ: kühler (bläulich), positiv: wärmer (rötlich)."
+  },
+  "offsetX": {
+    "message": "Position horizontal"
+  },
+  "offsetY": {
+    "message": "Position vertikal"
+  },
+  "offsetHint": {
+    "message": "Verschiebt das Bild, z. B. um einen anderen Ausschnitt eines gezoomten Videos zu zeigen."
+  },
+  "seekBack": {
+    "message": "−10 s"
+  },
+  "seekForward": {
+    "message": "+10 s"
+  },
+  "seekTo": {
+    "message": "Position $1"
+  },
+  "videoSize": {
+    "message": "Video $1 × $2"
+  },
+  "videoInfo": {
+    "message": "Video $1 × $2 · verworfene Frames: $3 von $4"
+  },
+  "videoFps": {
+    "message": "$1 fps"
+  },
+  "osdVolume": {
+    "message": "Lautstärke $1 %"
+  },
+  "badgeOff": {
+    "message": "aus"
+  },
+  "defaultSettings": {
+    "message": "Standard für alle Websites"
+  },
+  "useAsDefault": {
+    "message": "Aktuelle Einstellungen verwenden"
+  },
+  "removeDefault": {
+    "message": "Standard entfernen"
+  },
+  "defaultActive": {
+    "message": "Websites ohne eigene Einstellungen starten mit deinem Standard."
+  },
+  "defaultNone": {
+    "message": "Kein Standard festgelegt – Websites ohne eigene Einstellungen starten neutral."
+  },
+  "manageData": {
+    "message": "Websites & Backup verwalten"
+  },
+  "optionsTitle": {
+    "message": "Klangbild – Einstellungen"
+  },
+  "rememberedSites": {
+    "message": "Gespeicherte Websites"
+  },
+  "noSites": {
+    "message": "Noch keine Website-Einstellungen gespeichert. Setze im Panel den Haken bei „Für … merken“."
+  },
+  "deleteAll": {
+    "message": "Alle löschen"
+  },
+  "changedValues": {
+    "message": "$1 geänderte Werte"
+  },
+  "changedValue": {
+    "message": "1 geänderter Wert"
+  },
+  "backup": {
+    "message": "Backup"
+  },
+  "backupHint": {
+    "message": "Speichert gespeicherte und deaktivierte Websites, eigene Presets und den Standard in einer JSON-Datei. Beim Import wird eine Datei mit den aktuellen Daten zusammengeführt."
+  },
+  "exportBackup": {
+    "message": "Exportieren"
+  },
+  "importBackup": {
+    "message": "Importieren"
+  },
+  "importDone": {
+    "message": "Importiert: $1 Websites, $2 Presets."
+  },
+  "importFailed": {
+    "message": "Diese Datei ist kein Klangbild-Backup."
+  },
+  "room": {
+    "message": "Raum"
+  },
+  "reverb": {
+    "message": "Hall"
+  },
+  "colorVision": {
+    "message": "Farbsehen"
+  },
+  "colorVisionHint": {
+    "message": "Korrektur bei Farbsehschwäche: Farben, die gleich aussehen, werden zu noch unterscheidbaren verschoben."
+  },
+  "cvd_none": {
+    "message": "Normal"
+  },
+  "cvd_protan": {
+    "message": "Rotschwäche"
+  },
+  "cvd_deutan": {
+    "message": "Grünschwäche"
+  },
+  "cvd_tritan": {
+    "message": "Blauschwäche"
+  },
+  "siteTitle": {
+    "message": "Diese Website"
+  },
+  "disableHere": {
+    "message": "Auf dieser Website deaktivieren"
+  },
+  "disableHereHint": {
+    "message": "Klangbild lässt Video und Ton auf dieser Website dann komplett in Ruhe. Die Seite wird neu geladen."
+  },
+  "disabledHere": {
+    "message": "Klangbild ist auf dieser Website deaktiviert."
+  },
+  "enableHere": {
+    "message": "Wieder aktivieren"
+  },
+  "repeatAll": {
+    "message": "Ganz wiederholen"
+  },
+  "sleepTimer": {
+    "message": "Sleep-Timer"
+  },
+  "minutes": {
+    "message": "$1 Min."
+  },
+  "sleepInactive": {
+    "message": "Pausiert die Wiedergabe nach der gewählten Zeit und blendet in den letzten 10 Sekunden aus."
+  },
+  "sleepLeft": {
+    "message": "Pausiert in $1"
+  },
+  "sleepSet": {
+    "message": "Sleep-Timer: $1 Min."
+  },
+  "sleepOff": {
+    "message": "Sleep-Timer aus"
+  },
+  "sleepDone": {
+    "message": "Sleep-Timer: pausiert"
+  },
+  "disabledSites": {
+    "message": "Deaktivierte Websites"
+  },
+  "disabledSitesHint": {
+    "message": "Auf diesen Websites rührt Klangbild Video und Ton nicht an. Das Entfernen wirkt, sobald die Website neu geladen wird."
+  },
+  "noDisabledSites": {
+    "message": "Keine."
+  },
+  "tabCustomize": {
+    "message": "Anpassen"
+  },
+  "limitsTitle": {
+    "message": "Grenzen"
+  },
+  "extendedLimits": {
+    "message": "Erweiterte Grenzen"
+  },
+  "extendedLimitsHint": {
+    "message": "Die Regler in der Seitenleiste reichen weiter als im Popup, z. B. Tempo $1×, Lautstärke bis $2 %, Equalizer ±$3 dB und Ton-Verzögerung bis $4 ms. Firefox schaltet den Ton außerhalb von 0,25×–4× stumm."
+  },
+  "jumpWidths": {
+    "message": "Sprungweite der Zeitleiste"
+  },
+  "jumpShort": {
+    "message": "Kurzer Sprung"
+  },
+  "jumpLong": {
+    "message": "Langer Sprung"
+  },
+  "sliderSteps": {
+    "message": "Schrittweite der Regler"
+  },
+  "sliderStepsHint": {
+    "message": "So weit bewegen − / + und die Pfeiltasten einen Regler. Leer lassen für den Standardwert."
+  },
+  "resetSteps": {
+    "message": "Schrittweiten zurücksetzen"
+  },
+  "increase": {
+    "message": "Erhöhen"
+  },
+  "decrease": {
+    "message": "Verringern"
+  },
+  "seekBackBy": {
+    "message": "$1 s zurück"
+  },
+  "seekFwdBy": {
+    "message": "$1 s vor"
+  },
+  "live": {
+    "message": "Live"
+  },
+  "showShortcuts": {
+    "message": "Alle Tastenkürzel anzeigen"
+  },
+  "separation": {
+    "message": "Trennung"
+  },
+  "dialog": {
+    "message": "Stimme ↔ Hintergrund"
+  },
+  "dialogHint": {
+    "message": "Positiv: Musik, Geräusche und Raum leiser – mittig gemischte Sprache bleibt. Negativ: Stimmen leiser. Wirkt am besten bei Stereo; bei Mono trennt nur der Frequenzbereich. Verzögert den Ton um etwa 21 ms."
+  },
+  "tabMixer": {
+    "message": "Mischpult"
+  },
+  "mixerHint": {
+    "message": "Alle Videos und Audios aus allen Tabs. Lautstärke und Stumm wirken zusätzlich zu den Einstellungen des Tabs und gelten bis zum Neuladen der Seite."
+  },
+  "mixerEmpty": {
+    "message": "Gerade spielt nichts. Sobald ein Tab Ton abspielt, erscheint er hier."
+  },
+  "muteTab": {
+    "message": "Tab stumm"
+  },
+  "goToTab": {
+    "message": "Zum Tab wechseln"
+  },
+  "mute": {
+    "message": "Stumm"
+  },
+  "mediaVideo": {
+    "message": "Video"
+  },
+  "mediaAudio": {
+    "message": "Audio"
+  },
+  "mutedByPage": {
+    "message": "Von der Seite selbst stummgeschaltet."
+  },
+  "mixerDrm": {
+    "message": "Kopiergeschützt – nur der ganze Tab lässt sich stummschalten."
+  },
+  "mixerNoAccess": {
+    "message": "Kein Zugriff auf diese Seite – nur der ganze Tab lässt sich stummschalten."
+  },
+  "mixerDisabledHere": {
+    "message": "Klangbild ist auf dieser Seite deaktiviert – nur der ganze Tab lässt sich stummschalten."
+  },
+  "mixerNative": {
+    "message": "Von einem anderen Server: geregelt über die Lautstärke des Players, deshalb höchstens 100 %."
+  },
+  "reloadResume": {
+    "message": "Neu laden und weiterschauen"
+  },
+  "reloadResumeHint": {
+    "message": "Lädt die Seite neu und setzt die Wiedergabe an derselben Stelle fort."
+  },
+  "skipSilence": {
+    "message": "Pausen überspringen"
+  },
+  "skipSilenceHint": {
+    "message": "Spielt stille Stellen dreimal so schnell ab – praktisch bei Vorträgen und Podcasts. Was als Stille gilt, richtet sich nach der Lautstärke der Aufnahme."
+  },
+  "silenceSaved": {
+    "message": "$1 gespart"
+  },
+  "ambilight": {
+    "message": "Ambilight"
+  },
+  "ambilightStrength": {
+    "message": "Leuchten"
+  },
+  "ambilightHint": {
+    "message": "Ein farbiger Schein um das Bild in den Farben seiner Ränder. Am schönsten auf dunklen Seiten und im Vollbild mit schwarzen Balken."
+  },
+  "ruleActive": {
+    "message": "Regel $1 aktiv"
+  },
+  "resumedAt": {
+    "message": "Weiter bei $1"
+  },
+  "rules": {
+    "message": "Regeln"
+  },
+  "rulesHint": {
+    "message": "Einstellungen automatisch für bestimmte Adressen: ein Preset und/oder ein Tempo. Muster: „example.com“ (mit Subdomains), „example.com/podcasts/*“ oder „example.com/watch?v=*“. * steht für beliebigen Text; die genaueste passende Regel gewinnt. Wirkt auch, wenn eine Seite die Adresse ohne Neuladen wechselt."
+  },
+  "addRule": {
+    "message": "Hinzufügen"
+  },
+  "rulePatternPlaceholder": {
+    "message": "example.com/podcasts/*"
+  },
+  "ruleSpeedPlaceholder": {
+    "message": "Tempo"
+  },
+  "rulePresetNone": {
+    "message": "Kein Preset"
+  },
+  "presetMissing": {
+    "message": "Preset fehlt"
+  },
+  "noRules": {
+    "message": "Noch keine Regeln."
+  },
+  "ruleBadPattern": {
+    "message": "Dieses Muster passt so auf keine Adresse. Beispiel: example.com/podcasts/*"
+  },
+  "ruleNeedsAction": {
+    "message": "Wähle ein Preset oder gib ein Tempo an."
+  },
+  "ruleAdded": {
+    "message": "Regel gespeichert – sie gilt ab dem nächsten Laden der Seite."
+  },
+  "continueWatching": {
+    "message": "Weiterschauen"
+  },
+  "continueWatchingHint": {
+    "message": "Videos und Audios ab 2 Minuten Länge machen dort weiter, wo du aufgehört hast – auf jeder Website. Die Positionen bleiben in deinem Browser, gespeichert unter einem Hash der Adresse (kein lesbarer Verlauf), und nie aus privaten Fenstern."
+  },
+  "continueWatchingOn": {
+    "message": "Weiterschauen aktiv"
+  },
+  "forgetPositions": {
+    "message": "$1 gespeicherte Positionen löschen"
   }
 }

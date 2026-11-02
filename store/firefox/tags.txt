@@ -1,0 +1,8 @@
+audio
+video
+equalizer
+volume booster
+audio sync
+playback speed
+youtube
+bluetooth delay

@@ -5,6 +5,9 @@
   "extDescription": {
     "message": "Edit audio and video on any website in real time: speed, A/V sync, equalizer, volume boost, picture filters and more."
   },
+  "cmdSidebar": {
+    "message": "Open Klangbild in the sidebar"
+  },
   "cmdOpen": {
     "message": "Open the Klangbild panel"
   },
@@ -44,6 +47,24 @@
   "resetAll": {
     "message": "Reset all"
   },
+  "sliderMode": {
+    "message": "Sliders"
+  },
+  "sliderModeHint": {
+    "message": "The thumb's rings set the step size: grabbed inside ±1 (fine), middle ±5, outside ±10. Drag: pulled along the track the thumb moves in those steps, pulled up/down and circled it turns (clockwise for more). Turn: a press always turns."
+  },
+  "sliderDrag": {
+    "message": "Drag"
+  },
+  "sliderTurn": {
+    "message": "Turn"
+  },
+  "sliderHintDrag": {
+    "message": "Grabbed inside ±1, middle ±5, outside ±10 · pull sideways: move in those steps · pull up/down and circle: turn · Double-click: reset · Mouse wheel: change (Shift: 10 steps)"
+  },
+  "sliderHintTurn": {
+    "message": "Turn the thumb like a knob: grabbed inside ±1, middle ±5, outside ±10 – clockwise for more · Click on the track: jump there · Double-click: reset · Mouse wheel: change (Shift: 10 steps)"
+  },
   "reset": {
     "message": "reset"
   },
@@ -60,7 +81,7 @@
     "message": "Not available on this page (e.g. about: pages or addons.mozilla.org)."
   },
   "statusAudioBlocked": {
-    "message": "Audio effects blocked – probably after an extension update. Please reload the page."
+    "message": "Audio effects blocked – an older Klangbild version still holds this page's sound (after an update). Reloading frees it."
   },
   "statusDrmSilent": {
     "message": "A copy-protected video was routed through Web Audio and is now silent – please reload the page."
@@ -124,6 +145,9 @@
   },
   "limiter": {
     "message": "Limiter"
+  },
+  "autoGain": {
+    "message": "Loudness leveling"
   },
   "color": {
     "message": "Color"
@@ -394,5 +418,368 @@
   },
   "effectsOff": {
     "message": "Effects off"
+  },
+  "cmdSpeedReset": {
+    "message": "Reset speed (1×)"
+  },
+  "cmdSeekBack": {
+    "message": "Jump back 10 s"
+  },
+  "cmdSeekForward": {
+    "message": "Jump forward 10 s"
+  },
+  "cmdVolumeUp": {
+    "message": "Volume +10 %"
+  },
+  "cmdVolumeDown": {
+    "message": "Volume −10 %"
+  },
+  "stereoWidth": {
+    "message": "Stereo width"
+  },
+  "stereoWidthHint": {
+    "message": "0 %: mono, 100 %: original, 200 %: extra wide. Above 100 % the limiter is always on."
+  },
+  "swapChannels": {
+    "message": "Swap L/R"
+  },
+  "gamma": {
+    "message": "Gamma"
+  },
+  "temperature": {
+    "message": "Color temperature"
+  },
+  "temperatureHint": {
+    "message": "Negative: cooler (bluish), positive: warmer (reddish)."
+  },
+  "offsetX": {
+    "message": "Position horizontal"
+  },
+  "offsetY": {
+    "message": "Position vertical"
+  },
+  "offsetHint": {
+    "message": "Moves the picture, e.g. to show another part of a zoomed video."
+  },
+  "seekBack": {
+    "message": "−10 s"
+  },
+  "seekForward": {
+    "message": "+10 s"
+  },
+  "seekTo": {
+    "message": "Position $1"
+  },
+  "videoSize": {
+    "message": "Video $1 × $2"
+  },
+  "videoInfo": {
+    "message": "Video $1 × $2 · dropped frames: $3 of $4"
+  },
+  "videoFps": {
+    "message": "$1 fps"
+  },
+  "osdVolume": {
+    "message": "Volume $1 %"
+  },
+  "badgeOff": {
+    "message": "off"
+  },
+  "defaultSettings": {
+    "message": "Default for all sites"
+  },
+  "useAsDefault": {
+    "message": "Use current settings"
+  },
+  "removeDefault": {
+    "message": "Remove default"
+  },
+  "defaultActive": {
+    "message": "Sites without their own settings start with your default."
+  },
+  "defaultNone": {
+    "message": "No default set – sites without their own settings start neutral."
+  },
+  "manageData": {
+    "message": "Manage sites & backup"
+  },
+  "optionsTitle": {
+    "message": "Klangbild – Settings"
+  },
+  "rememberedSites": {
+    "message": "Remembered sites"
+  },
+  "noSites": {
+    "message": "No site settings saved yet. Tick \"Remember for …\" in the panel to add one."
+  },
+  "deleteAll": {
+    "message": "Delete all"
+  },
+  "changedValues": {
+    "message": "$1 changed values"
+  },
+  "changedValue": {
+    "message": "1 changed value"
+  },
+  "backup": {
+    "message": "Backup"
+  },
+  "backupHint": {
+    "message": "Saves remembered sites, disabled sites, custom presets and the default to a JSON file. Importing merges a file into the current data."
+  },
+  "exportBackup": {
+    "message": "Export"
+  },
+  "importBackup": {
+    "message": "Import"
+  },
+  "importDone": {
+    "message": "Imported: $1 sites, $2 presets."
+  },
+  "importFailed": {
+    "message": "This file isn't a Klangbild backup."
+  },
+  "room": {
+    "message": "Room"
+  },
+  "reverb": {
+    "message": "Reverb"
+  },
+  "colorVision": {
+    "message": "Color vision"
+  },
+  "colorVisionHint": {
+    "message": "Correction for color blindness: colors that look alike are shifted to ones that can still be told apart."
+  },
+  "cvd_none": {
+    "message": "Normal"
+  },
+  "cvd_protan": {
+    "message": "Red weakness"
+  },
+  "cvd_deutan": {
+    "message": "Green weakness"
+  },
+  "cvd_tritan": {
+    "message": "Blue weakness"
+  },
+  "siteTitle": {
+    "message": "This site"
+  },
+  "disableHere": {
+    "message": "Disable on this site"
+  },
+  "disableHereHint": {
+    "message": "Klangbild then leaves video and audio on this site completely alone. The page is reloaded."
+  },
+  "disabledHere": {
+    "message": "Klangbild is disabled on this site."
+  },
+  "enableHere": {
+    "message": "Enable again"
+  },
+  "repeatAll": {
+    "message": "Repeat all"
+  },
+  "sleepTimer": {
+    "message": "Sleep timer"
+  },
+  "minutes": {
+    "message": "$1 min"
+  },
+  "sleepInactive": {
+    "message": "Pauses playback after the chosen time, fading out over the last 10 seconds."
+  },
+  "sleepLeft": {
+    "message": "Pauses in $1"
+  },
+  "sleepSet": {
+    "message": "Sleep timer: $1 min"
+  },
+  "sleepOff": {
+    "message": "Sleep timer off"
+  },
+  "sleepDone": {
+    "message": "Sleep timer: paused"
+  },
+  "disabledSites": {
+    "message": "Disabled sites"
+  },
+  "disabledSitesHint": {
+    "message": "Klangbild doesn't touch video and audio on these sites. Removing one takes effect when the site is reloaded."
+  },
+  "noDisabledSites": {
+    "message": "None."
+  },
+  "tabCustomize": {
+    "message": "Customize"
+  },
+  "limitsTitle": {
+    "message": "Limits"
+  },
+  "extendedLimits": {
+    "message": "Extended limits"
+  },
+  "extendedLimitsHint": {
+    "message": "The sidebar's sliders reach further than the popup's, e.g. speed $1×, volume up to $2 %, equalizer ±$3 dB and audio delay up to $4 ms. Firefox mutes the sound outside 0.25×–4×."
+  },
+  "jumpWidths": {
+    "message": "Timeline jumps"
+  },
+  "jumpShort": {
+    "message": "Short jump"
+  },
+  "jumpLong": {
+    "message": "Long jump"
+  },
+  "sliderSteps": {
+    "message": "Slider steps"
+  },
+  "sliderStepsHint": {
+    "message": "How far − / + and the arrow keys move a slider. Leave empty for the default."
+  },
+  "resetSteps": {
+    "message": "Reset steps"
+  },
+  "increase": {
+    "message": "Increase"
+  },
+  "decrease": {
+    "message": "Decrease"
+  },
+  "seekBackBy": {
+    "message": "Back $1 s"
+  },
+  "seekFwdBy": {
+    "message": "Forward $1 s"
+  },
+  "live": {
+    "message": "Live"
+  },
+  "showShortcuts": {
+    "message": "Show all shortcuts"
+  },
+  "separation": {
+    "message": "Separation"
+  },
+  "dialog": {
+    "message": "Voice ↔ background"
+  },
+  "dialogHint": {
+    "message": "Positive: music, effects and room quieter – speech mixed to the center stays. Negative: voices quieter. Works best with stereo; with mono only the frequency range separates. Delays the sound by about 21 ms."
+  },
+  "tabMixer": {
+    "message": "Mixer"
+  },
+  "mixerHint": {
+    "message": "Every video and audio in every tab. Volume and mute come on top of the tab's settings and last until the page is reloaded."
+  },
+  "mixerEmpty": {
+    "message": "Nothing is playing. As soon as a tab plays sound, it shows up here."
+  },
+  "muteTab": {
+    "message": "Mute tab"
+  },
+  "goToTab": {
+    "message": "Go to tab"
+  },
+  "mute": {
+    "message": "Mute"
+  },
+  "mediaVideo": {
+    "message": "Video"
+  },
+  "mediaAudio": {
+    "message": "Audio"
+  },
+  "mutedByPage": {
+    "message": "Muted by the page itself."
+  },
+  "mixerDrm": {
+    "message": "Copy-protected – only the whole tab can be muted."
+  },
+  "mixerNoAccess": {
+    "message": "No access to this page – only the whole tab can be muted."
+  },
+  "mixerDisabledHere": {
+    "message": "Klangbild is disabled on this site – only the whole tab can be muted."
+  },
+  "mixerNative": {
+    "message": "From another server: controlled through the player's own volume, so at most 100 %."
+  },
+  "reloadResume": {
+    "message": "Reload and continue"
+  },
+  "reloadResumeHint": {
+    "message": "Reloads the page and continues playback at the same position."
+  },
+  "skipSilence": {
+    "message": "Skip silence"
+  },
+  "skipSilenceHint": {
+    "message": "Plays quiet passages three times as fast – handy for talks and podcasts. What counts as silence follows the loudness of the recording."
+  },
+  "silenceSaved": {
+    "message": "$1 saved"
+  },
+  "ambilight": {
+    "message": "Ambilight"
+  },
+  "ambilightStrength": {
+    "message": "Glow"
+  },
+  "ambilightHint": {
+    "message": "A colored glow around the picture in the colors of its edges. Looks best on dark pages and in fullscreen with black bars."
+  },
+  "ruleActive": {
+    "message": "Rule $1 active"
+  },
+  "resumedAt": {
+    "message": "Continued at $1"
+  },
+  "rules": {
+    "message": "Rules"
+  },
+  "rulesHint": {
+    "message": "Settings applied automatically to certain addresses: a preset and/or a speed. Patterns: \"example.com\" (with subdomains), \"example.com/podcasts/*\" or \"example.com/watch?v=*\". * stands for any text; the most specific matching rule wins. Also works when a page changes its address without reloading."
+  },
+  "addRule": {
+    "message": "Add"
+  },
+  "rulePatternPlaceholder": {
+    "message": "example.com/podcasts/*"
+  },
+  "ruleSpeedPlaceholder": {
+    "message": "Speed"
+  },
+  "rulePresetNone": {
+    "message": "No preset"
+  },
+  "presetMissing": {
+    "message": "Preset missing"
+  },
+  "noRules": {
+    "message": "No rules yet."
+  },
+  "ruleBadPattern": {
+    "message": "This pattern can't match any address. Example: example.com/podcasts/*"
+  },
+  "ruleNeedsAction": {
+    "message": "Choose a preset or enter a speed."
+  },
+  "ruleAdded": {
+    "message": "Rule saved – it applies from the next page load."
+  },
+  "continueWatching": {
+    "message": "Continue watching"
+  },
+  "continueWatchingHint": {
+    "message": "Videos and audio of 2 minutes or longer continue where you left off – on any website. Positions stay in your browser, stored under a hash of the address (no readable history), and never from private windows."
+  },
+  "continueWatchingOn": {
+    "message": "Continue watching on"
+  },
+  "forgetPositions": {
+    "message": "Delete $1 saved positions"
   }
 }

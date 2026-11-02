@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "default_locale": "en",
   "description": "__MSG_extDescription__",
   "browser_specific_settings": {
@@ -28,7 +28,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["common.js", "videodelay.js", "content.js"],
+      "js": ["common.js", "videodelay.js", "ambilight.js", "dialog.js", "content.js"],
       "all_frames": true,
       "match_about_blank": true,
       "run_at": "document_start"
@@ -39,10 +39,29 @@
     "default_popup": "popup/popup.html",
     "default_icon": "icons/icon.svg"
   },
+  "sidebar_action": {
+    "default_title": "Klangbild",
+    "default_panel": "popup/popup.html?sidebar",
+    "default_icon": "icons/icon.svg",
+    "open_at_install": false
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dialog.js", "dialog-worklet.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
   "commands": {
     "_execute_action": {
       "suggested_key": { "default": "Alt+Shift+A" },
       "description": "__MSG_cmdOpen__"
+    },
+    "_execute_sidebar_action": {
+      "description": "__MSG_cmdSidebar__"
     },
     "speed-up": {
       "suggested_key": { "default": "Alt+Shift+Up" },
@@ -71,6 +90,21 @@
     "screenshot": {
       "suggested_key": { "default": "Alt+Shift+S" },
       "description": "__MSG_cmdScreenshot__"
+    },
+    "speed-reset": {
+      "description": "__MSG_cmdSpeedReset__"
+    },
+    "seek-back": {
+      "description": "__MSG_cmdSeekBack__"
+    },
+    "seek-forward": {
+      "description": "__MSG_cmdSeekForward__"
+    },
+    "volume-up": {
+      "description": "__MSG_cmdVolumeUp__"
+    },
+    "volume-down": {
+      "description": "__MSG_cmdVolumeDown__"
     }
   }
 }

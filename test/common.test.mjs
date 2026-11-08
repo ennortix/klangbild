@@ -68,7 +68,7 @@ test("sanitize: defaults lie inside their ranges", () => {
 });
 
 test("RANGES match the popup sliders", () => {
-  const popup = read("popup/popup.js");
+  const popup = read("popup/modules.js");
   const sliders = [...popup.matchAll(/key: "(\w+)",[^}]*?min: (-?[\d.]+),\s*max: (-?[\d.]+)/gs)];
   assert.ok(sliders.length > 15, "found the slider definitions");
   for (const [, key, min, max] of sliders) {
@@ -256,4 +256,90 @@ test("frameDuration: too few or useless samples give null", () => {
   assert.equal(AVFX.frameDuration(frames(25, 5)), null);
   assert.equal(AVFX.frameDuration(Array(60).fill(0)), null);
   assert.equal(AVFX.frameDuration(Array(60).fill(NaN)), null);
+});
+
+test("crossfader: gains, automatic position and sanitizing", () => {
+  const g = (p) => plain(AVFX.crossfadeGains(p));
+  assert.deepEqual(g(0), { a: 1, b: 1 });
+  assert.deepEqual(g(-100), { a: 1, b: 0 });
+  assert.deepEqual(g(100), { a: 0, b: 1 });
+  assert.deepEqual(g(-25), { a: 1, b: 0.75 });
+  assert.deepEqual(g(500), { a: 0, b: 1 });
+  const c = { position: 30, auto: true, duck: 20 };
+  assert.equal(AVFX.crossfadePosition(c, false), 30);
+  assert.equal(AVFX.crossfadePosition(c, true), -80);
+  assert.equal(AVFX.crossfadePosition({ ...c, position: -95 }, true), -95, "the slider may go lower");
+  assert.equal(AVFX.crossfadePosition({ ...c, auto: false }, true), 30);
+  assert.deepEqual(plain(AVFX.sanitizeCrossfade(null)), plain(AVFX.CROSSFADE_DEFAULTS));
+  assert.deepEqual(plain(AVFX.sanitizeCrossfade({ a: 3, b: 3, position: -300, auto: 1, duck: "x" })), {
+    a: 3, b: null, position: -100, auto: false, duck: 25, trigger: "sound",
+  });
+  assert.equal(AVFX.sanitizeCrossfade({ a: -1, b: 1.5 }).a, null);
+});
+
+// ---------- Detection ----------
+
+// Frame levels (dB per 20 ms) of a signal whose amplitude follows amp(t).
+const levelsOf = (amp, seconds = 2) => {
+  const n = (seconds * 1000) / 20;
+  return Array.from({ length: n }, (_, i) => 20 * Math.log10(Math.max(1e-6, amp((i * 20) / 1000))));
+};
+
+test("levelSpread: speech with pauses spreads, a held note doesn't", () => {
+  const { VOICE } = AVFX;
+  const speech = AVFX.levelSpread(levelsOf((t) => Math.max(0, Math.sin(2 * Math.PI * 4 * t)) * 0.3 + 0.003), VOICE.clamp);
+  assert.ok(speech >= VOICE.minStd, `speech ${speech}`);
+  const note = AVFX.levelSpread(levelsOf((t) => 0.3 * (1 + 0.1 * Math.sin(2 * Math.PI * 0.5 * t))), VOICE.clamp);
+  assert.ok(note < VOICE.minStd, `note ${note}`);
+  // gaps (frames not measured) are skipped, digital silence counts as the clamp
+  const gappy = levelsOf((t) => Math.max(0, Math.sin(2 * Math.PI * 4 * t)) * 0.3 + 0.003).map((v, i) => (i % 5 === 0 ? NaN : v));
+  assert.ok(AVFX.levelSpread(gappy, VOICE.clamp) >= VOICE.minStd);
+  assert.ok(AVFX.levelSpread([...Array(50).fill(-20), ...Array(50).fill(-400)], VOICE.clamp) === 25);
+  assert.equal(AVFX.levelSpread([NaN, NaN], VOICE.clamp), 0);
+});
+
+test("frameLevels and channelCorrelation", () => {
+  const rate = 1000;
+  const left = Float32Array.from({ length: 100 }, (_, i) => (i < 50 ? 0 : 0.5));
+  const levels = AVFX.frameLevels(left, left, rate, 20);
+  assert.equal(levels.length, 5);
+  assert.ok(levels[0] < -100 && Math.abs(levels[4] - 20 * Math.log10(0.5)) < 0.01);
+  const sine = Float32Array.from({ length: 1000 }, (_, i) => Math.sin(i / 7));
+  assert.ok(Math.abs(AVFX.channelCorrelation(sine, sine) - 1) < 1e-9);
+  assert.ok(Math.abs(AVFX.channelCorrelation(sine, sine.map((v) => -v)) + 1) < 1e-9);
+  assert.equal(AVFX.channelCorrelation(sine, new Float32Array(1000)), 1, "silent right channel: mono");
+});
+
+test("bandShare: power in the speech band", () => {
+  const binHz = 10;
+  const db = (inBand, outBand) => Float32Array.from({ length: 2000 }, (_, k) => (k * binHz >= 250 && k * binHz <= 4000 ? inBand : outBand));
+  assert.ok(AVFX.bandShare(db(-20, -80), db(-20, -80), binHz, 250, 4000) > 0.99);
+  assert.ok(AVFX.bandShare(db(-80, -20), db(-80, -20), binHz, 250, 4000) < 0.01);
+  assert.equal(AVFX.bandShare(db(-Infinity, -Infinity), db(-Infinity, -Infinity), binHz, 250, 4000), 0);
+});
+
+test("isVoice: every feature has to agree", () => {
+  const voice = { level: -25, share: 0.8, std: 8, corr: 0.95 };
+  assert.equal(AVFX.isVoice(voice), true);
+  for (const [key, value] of [["level", -60], ["share", 0.3], ["std", 2], ["corr", 0]]) {
+    assert.equal(AVFX.isVoice({ ...voice, [key]: value }), false, key);
+  }
+});
+
+test("envelopeMatch: finds the same audio at its offset, not different audio", () => {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296) * 30 - 60;
+  const base = Array.from({ length: 800 }, rnd);
+  const a = { start: 1000, values: base.slice(100, 700) };
+  const b = { start: 1040, values: base.slice(100, 700).map((v) => v - 6) }; // 40 frames later, quieter
+  const m = AVFX.envelopeMatch(a, b, 150, 200, 3);
+  assert.equal(m.lag, 40);
+  assert.ok(m.corr > 0.99);
+  const other = { start: 1000, values: Array.from({ length: 600 }, rnd) };
+  assert.ok(AVFX.envelopeMatch(a, other, 150, 200, 3).corr < 0.5);
+  // gaps (null) are skipped; too little overlap or a flat level gives nothing
+  const gappy = { ...b, values: b.values.map((v, i) => (i % 3 ? v : null)) };
+  assert.equal(AVFX.envelopeMatch(a, gappy, 150, 200, 3).lag, 40);
+  assert.equal(AVFX.envelopeMatch(a, { start: 1000, values: a.values.slice(0, 100) }, 150, 200, 3), null);
+  assert.equal(AVFX.envelopeMatch(a, { start: 1000, values: a.values.map(() => -30) }, 150, 200, 3), null);
 });

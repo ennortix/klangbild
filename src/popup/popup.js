@@ -1,178 +1,16 @@
 const { DEFAULTS } = AVFX;
 
-// Groups hold "controls" (sliders), "toggles" (chips), a "choice" (chip group)
-// or a "custom" renderer from spectrum.js / presets.js / tools.js.
-const SECTIONS = [
-  {
-    id: "playback",
-    icon: "playback",
-    title: t("tabPlayback"),
-    groups: [
-      {
-        controls: [{ key: "speed", icon: "speed", label: t("speed"), ...AVFX.SPEED, unit: "×" }],
-      },
-      { choice: { key: "speed", options: [0.5, 0.75, 1, 1.25, 1.5, 2, 3], unit: "×" } },
-      {
-        controls: [
-          {
-            key: "audioDelay",
-            icon: "delay",
-            label: t("audioDelay"),
-            min: AVFX.MIN_DELAY_MS,
-            max: AVFX.MAX_DELAY_MS,
-            step: 5,
-            unit: "ms",
-            hint: t("audioDelayHint"),
-          },
-        ],
-      },
-      {
-        toggles: [
-          { key: "preservePitch", icon: "pitch", label: t("preservePitch") },
-          { key: "skipSilence", icon: "skipSilence", label: t("skipSilence"), hint: t("skipSilenceHint") },
-        ],
-      },
-    ],
-  },
-  {
-    id: "audio",
-    icon: "audio",
-    title: t("tabAudio"),
-    groups: [
-      { title: t("analyzer"), icon: "spectrum", custom: renderSpectrum },
-      {
-        controls: [
-          { key: "volume", icon: "volume", label: t("volume"), min: 0, max: 400, step: 1, unit: "%" },
-          { key: "pan", icon: "pan", label: t("balance"), min: -100, max: 100, step: 1, unit: "" },
-          { key: "width", icon: "width", label: t("stereoWidth"), min: 0, max: 200, step: 1, unit: "%", hint: t("stereoWidthHint") },
-        ],
-      },
-      {
-        title: t("equalizer"), icon: "equalizer",
-        controls: [
-          { key: "bass", icon: "bass", label: t("bass"), min: -15, max: 15, step: 0.5, unit: "dB" },
-          { key: "mid", icon: "mid", label: t("mids"), min: -15, max: 15, step: 0.5, unit: "dB" },
-          { key: "treble", icon: "treble", label: t("treble"), min: -15, max: 15, step: 0.5, unit: "dB" },
-        ],
-      },
-      {
-        toggles: [
-          { key: "mono", icon: "mono", label: t("mono") },
-          { key: "swap", icon: "swap", label: t("swapChannels") },
-          { key: "voice", icon: "voice", label: t("enhanceVoice") },
-          { key: "compressor", icon: "compressor", label: t("compressor") },
-          { key: "limiter", icon: "limiter", label: t("limiter") },
-          { key: "autoGain", icon: "autoGain", label: t("autoGain") },
-        ],
-      },
-      {
-        title: t("separation"), icon: "voice",
-        controls: [
-          { key: "dialog", icon: "dialog", label: t("dialog"), min: -100, max: 100, step: 1, unit: "", hint: t("dialogHint") },
-        ],
-      },
-      {
-        title: t("room"), icon: "reverb",
-        controls: [{ key: "reverb", icon: "reverb", label: t("reverb"), min: 0, max: 100, step: 1, unit: "%" }],
-      },
-    ],
-  },
-  {
-    id: "video",
-    icon: "video",
-    title: t("tabVideo"),
-    groups: [
-      {
-        title: t("color"), icon: "color",
-        controls: [
-          { key: "brightness", icon: "brightness", label: t("brightness"), min: 0, max: 300, step: 1, unit: "%" },
-          { key: "contrast", icon: "contrast", label: t("contrast"), min: 0, max: 300, step: 1, unit: "%" },
-          { key: "saturate", icon: "saturate", label: t("saturation"), min: 0, max: 300, step: 1, unit: "%" },
-          { key: "hue", icon: "hue", label: t("hue"), min: 0, max: 360, step: 1, unit: "°" },
-          { key: "gamma", icon: "gamma", label: t("gamma"), min: 0.2, max: 3, step: 0.05, unit: "" },
-          {
-            key: "temperature",
-            icon: "temperature",
-            label: t("temperature"),
-            min: -100,
-            max: 100,
-            step: 1,
-            unit: "",
-            hint: t("temperatureHint"),
-          },
-        ],
-      },
-      {
-        title: t("effects"), icon: "effects",
-        controls: [
-          { key: "sharpen", icon: "sharpen", label: t("sharpness"), min: 0, max: 100, step: 1, unit: "%" },
-          { key: "blur", icon: "blur", label: t("blur"), min: 0, max: 10, step: 0.1, unit: "px" },
-          { key: "grayscale", icon: "grayscale", label: t("grayscale"), min: 0, max: 100, step: 1, unit: "%" },
-          { key: "sepia", icon: "sepia", label: t("sepia"), min: 0, max: 100, step: 1, unit: "%" },
-          { key: "invert", icon: "invert", label: t("invert"), min: 0, max: 100, step: 1, unit: "%" },
-        ],
-      },
-      {
-        choice: {
-          key: "colorVision",
-          icon: "eye",
-          label: t("colorVision"),
-          options: AVFX.COLOR_VISION,
-          format: (o) => t(`cvd_${o}`),
-          hint: t("colorVisionHint"),
-        },
-      },
-      {
-        title: t("geometry"), icon: "geometry",
-        controls: [
-          { key: "zoom", icon: "zoom", label: t("zoom"), min: 50, max: 300, step: 1, unit: "%" },
-          { key: "offsetX", icon: "moveX", label: t("offsetX"), min: -50, max: 50, step: 1, unit: "%" },
-          { key: "offsetY", icon: "moveY", label: t("offsetY"), min: -50, max: 50, step: 1, unit: "%", hint: t("offsetHint") },
-        ],
-      },
-      {
-        toggles: [
-          { key: "flipH", icon: "flipH", label: t("flipH") },
-          { key: "flipV", icon: "flipV", label: t("flipV") },
-        ],
-      },
-      { choice: { key: "rotate", icon: "rotate", label: t("rotate"), options: [0, 90, 180, 270], unit: "°" } },
-      {
-        title: t("ambilight"), icon: "ambilight",
-        controls: [
-          { key: "ambilight", icon: "ambilight", label: t("ambilightStrength"), min: 0, max: 100, step: 1, unit: "%", hint: t("ambilightHint") },
-        ],
-      },
-    ],
-  },
-  {
-    id: "extras",
-    icon: "extras",
-    title: t("tabExtras"),
-    groups: [
-      { title: t("presets"), icon: "preset", custom: renderPresets },
-      { title: t("tools"), icon: "tools", custom: renderTools },
-      { title: t("defaultSettings"), icon: "globe", custom: renderDefaults },
-      { title: t("siteTitle"), icon: "power", custom: renderSiteSwitch },
-      { title: t("shortcuts"), icon: "keyboard", custom: renderShortcuts },
-    ],
-  },
-];
-
-if (IN_SIDEBAR) {
-  SECTIONS.push(
-    { id: "mixer", icon: "mixer", title: t("tabMixer"), groups: [{ custom: renderMixer }] },
-    { id: "customize", icon: "tune", title: t("tabCustomize"), groups: [{ custom: renderCustomize }] }
-  );
-}
+// The controls live in modules (modules.js), placed on pages by the layout (layout.js).
 
 let tabId = null;
 let host = null;
 let tabLoading = false; // the tab was still loading when the panel opened
 let panelReady = false; // init() is done (tabId null then means "no access")
 let settings = { ...DEFAULTS };
-const updaters = []; // refresh functions for every control
-let activeSection = null;
+// Refresh functions for every control. renderLayout() starts them over from
+// fixedUpdaters (the timeline and header, which are rendered once).
+let updaters = [];
+let fixedUpdaters = [];
 
 
 // ---------- Rendering ----------
@@ -258,7 +96,8 @@ function renderToggle(toggle) {
 
 // Without a label the chips belong to the control above, e.g. quick speeds.
 function renderChoice(ch) {
-  const wrap = el("div", { className: "toggles" });
+  // Short values (speeds, angles) line up as equal segments; named options stay chips.
+  const wrap = el("div", { className: ch.format ? "toggles" : "toggles segmented" });
   for (const opt of ch.options) {
     const text = ch.format ? ch.format(opt) : `${AVFX.formatNumber(opt, 2)}${ch.unit}`;
     const chip = el("button", { type: "button", className: "chip", textContent: text });
@@ -271,49 +110,6 @@ function renderChoice(ch) {
   else if (ch.hint) wrap.title = ch.hint;
   if (ch.label) nodes.unshift(el("div", { className: "group-title" }, icon(ch.icon), ch.label));
   return nodes;
-}
-
-function render() {
-  const tabs = $("tabs");
-  const panels = $("panels");
-
-  SECTIONS.forEach((section, i) => {
-    const tab = el("button", { type: "button", role: "tab", title: section.title }, icon(section.icon), el("span", { textContent: section.title }));
-    const panel = el("section", { className: "panel", role: "tabpanel" });
-
-    for (const g of section.groups) {
-      if (g.title) panel.append(el("div", { className: "group-title" }, icon(g.icon), g.title));
-      if (g.controls) g.controls.forEach((c) => panel.append(renderRange(c)));
-      if (g.toggles) panel.append(el("div", { className: "toggles" }, ...g.toggles.map(renderToggle)));
-      if (g.choice) panel.append(...renderChoice(g.choice));
-      if (g.custom) panel.append(...g.custom());
-    }
-
-    const select = () => {
-      tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", "false"));
-      panels.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      tab.setAttribute("aria-selected", "true");
-      panel.classList.add("active");
-      activeSection = section.id;
-      try {
-        localStorage.setItem("lastTab", section.id);
-      } catch {}
-    };
-    tab.addEventListener("click", select);
-    tabs.append(tab);
-    panels.append(panel);
-
-    let last = null;
-    try {
-      last = localStorage.getItem("lastTab");
-    } catch {}
-    if (last ? last === section.id : i === 0) select();
-  });
-
-  updaters.push(() => {
-    $("enabled").checked = settings.enabled;
-    document.body.classList.toggle("bypassed", !settings.enabled);
-  });
 }
 
 function refresh() {
@@ -333,7 +129,8 @@ function update(patch) {
   if ($("siteSave").checked && host) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      browser.storage.local.set({ [AVFX.siteKey(host)]: settings });
+      // unticked in the meantime: the site's entry was just removed and stays so
+      if ($("siteSave").checked) browser.storage.local.set({ [AVFX.siteKey(host)]: settings });
     }, 250);
   }
 }
@@ -393,17 +190,23 @@ const HOST_MARKER = "\uE000";
 
 function renderRememberFor(text) {
   const [before, after = ""] = t("rememberFor", HOST_MARKER).split(HOST_MARKER);
-  $("rememberFor").replaceChildren(before, el("b", { textContent: text }), after);
+  $("rememberFor").replaceChildren(before, el("b", { textContent: text, title: text }), after);
 }
 
 async function init() {
-  if (IN_SIDEBAR) await loadUi().catch(() => {});
+  await Promise.all([IN_SIDEBAR ? loadUi() : null, loadLayout()]).catch(() => {});
   localizePage();
   if (IN_SIDEBAR) {
     $("timeline").append(...renderTimeline());
     $("timeline").hidden = false;
   }
-  render();
+  updaters.push(() => {
+    $("enabled").checked = settings.enabled;
+    document.body.classList.toggle("bypassed", !settings.enabled);
+  });
+  fixedUpdaters = updaters.slice();
+  initLayoutUi();
+  renderLayout();
 
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   tabId = tab?.id ?? null;
@@ -437,7 +240,9 @@ async function init() {
   } catch {
     tabId = null;
     setStatus(t("notAvailable"), true);
-    document.querySelectorAll("main input, main button, header input").forEach((i) => (i.disabled = true));
+    noAccess = true;
+    applyAccess();
+    document.querySelectorAll("header input, #siteBar :is(input, button)").forEach((i) => (i.disabled = true));
   }
   panelReady = true;
   refresh();
@@ -457,7 +262,8 @@ async function reloadAndResume() {
 // The page is reloaded either way: Web Audio routing can't be undone in a running page.
 async function setSiteDisabled(disabled) {
   const key = AVFX.DISABLED_KEY;
-  const list = (await browser.storage.local.get(key))[key] ?? [];
+  const stored = (await browser.storage.local.get(key))[key];
+  const list = Array.isArray(stored) ? stored : [];
   const next = disabled ? [...new Set([...list, host])] : list.filter((h) => h !== host);
   await browser.storage.local.set({ [key]: next });
   await browser.tabs.reload(tabId);
@@ -478,22 +284,31 @@ async function followActiveTab() {
   });
 }
 
-function renderSiteSwitch() {
+function buildSiteSwitch() {
   const off = el("button", { type: "button", className: "chip" }, icon("power"), t("disableHere"));
   off.addEventListener("click", () => setSiteDisabled(true));
-  off.disabled = !host;
-  return [el("div", { className: "hint", textContent: t("disableHereHint") }), el("div", { className: "toggles" }, off)];
+  updaters.push(() => (off.disabled = !host));
+  return { hint: () => [el("div", { className: "hint", textContent: t("disableHereHint") })], disable: () => [off] };
 }
 
 function showDisabled() {
   setStatus(t("disabledHere"), true);
   const on = el("button", { type: "button", className: "chip" }, icon("power"), t("enableHere"));
   on.addEventListener("click", () => setSiteDisabled(false));
-  $("tabs").hidden = true;
   $("timeline").hidden = true;
-  $("panels").replaceChildren(el("section", { className: "panel active" }, el("div", { className: "toggles" }, on)));
   document.querySelector(".switch").hidden = true;
-  document.querySelector("footer").hidden = true;
+  $("siteBar").hidden = true;
+  editing = false;
+  if (!IN_SIDEBAR) {
+    $("tabs").hidden = true;
+    $("editLayout").hidden = true;
+    $("panels").replaceChildren(el("section", { className: "panel page active" }, el("div", { className: "toggles" }, on)));
+    return;
+  }
+  // The sidebar keeps the modules that don't depend on this site (mixer, its own settings).
+  $("status").after(el("div", { className: "toggles" }, on));
+  tabFreeOnly = true;
+  renderLayout();
 }
 
 // Changes made with keyboard shortcuts while the popup is open.
@@ -513,6 +328,7 @@ $("resetAll").addEventListener("click", () => update({ ...DEFAULTS }));
 $("reloadResume").addEventListener("click", reloadAndResume);
 
 $("siteSave").addEventListener("change", (e) => {
+  clearTimeout(saveTimer);
   const key = AVFX.siteKey(host);
   if (e.target.checked) browser.storage.local.set({ [key]: settings });
   else browser.storage.local.remove(key);

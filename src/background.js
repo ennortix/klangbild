@@ -1,5 +1,5 @@
 // Firefox loads common.js via the manifest; Chrome runs this file as a service worker.
-if (!globalThis.AVFX) importScripts("common.js");
+if (!globalThis.AVFX) importScripts("common.js", "sidepanel.js"); // Chrome
 
 // Settings remembered for the site of a URL, or null.
 function siteSettings(url) {
@@ -64,17 +64,210 @@ browser.tabs.onRemoved.addListener((tabId) => tabRules.delete(tabId));
 async function isDisabled(url) {
   const host = AVFX.hostOf(url);
   const r = await browser.storage.local.get(AVFX.DISABLED_KEY);
-  return Boolean(host && (r[AVFX.DISABLED_KEY] ?? []).includes(host));
+  const list = r[AVFX.DISABLED_KEY];
+  return Boolean(host && Array.isArray(list) && list.includes(host));
 }
 
-// What a content script starts with: { settings, disabled, rule, resume }.
+// What a content script starts with: { settings, disabled, rule, resume, ytVolume, ytSmooth, fade, voiceWatch }.
 async function initData(url, tabId) {
   if (await isDisabled(url)) return { settings: null, disabled: true };
   const rule = await ruleFor(url);
   if (tabId !== undefined) tabRules.set(tabId, rule?.pattern ?? null);
   const prefs = await loadPrefs();
-  return { settings: await settingsFor(url, rule), disabled: false, rule: rule?.pattern ?? null, resume: prefs.resume };
+  return {
+    settings: await settingsFor(url, rule),
+    disabled: false,
+    rule: rule?.pattern ?? null,
+    resume: prefs.resume,
+    ytVolume: prefs.ytVolume,
+    ytSmooth: prefs.ytSmooth,
+    fade: await crossfadeGainOf(tabId),
+    voiceWatch: await voiceWatchOf(tabId),
+  };
 }
+
+// ---------- Crossfader ----------
+
+// Set in the sidebar's mixer, but kept here: the sidebar starts over on every tab switch.
+// The media of tabs A and B get a factor on top of their own mix. Automatic: while A is
+// audible (and not muted), B is lowered; Firefox reports "not audible" a moment after
+// the sound stops, which serves as the hold time. With the trigger "voice" A's content
+// script listens for a voice and reports it (voice-state); where it can't analyse the
+// sound (DRM, calls, …) the audible state counts instead. Stored in storage.session
+// (tab ids only last a browser session), since the background page may be unloaded.
+const XFADE_TIME = { manual: 0.05, switch: 0.3, attack: 0.4, release: 1.5 }; // seconds to the new volume
+let xfadeState = null; // Promise<{ config, audible, voices: Map(frameId -> { voice, analysed }) }>
+let xfadeQueue = Promise.resolve();
+
+async function tabPlaying(id) {
+  if (id === null || id === undefined) return false;
+  try {
+    const tab = await browser.tabs.get(id);
+    return Boolean(tab.audible && !tab.mutedInfo?.muted);
+  } catch {
+    return false; // closed
+  }
+}
+
+function crossfadeState() {
+  xfadeState ??= (async () => {
+    const r = await browser.storage.session?.get(AVFX.CROSSFADE_KEY).catch(() => null);
+    const config = AVFX.sanitizeCrossfade(r?.[AVFX.CROSSFADE_KEY]);
+    return { config, audible: await tabPlaying(config.a), voices: new Map() };
+  })();
+  return xfadeState;
+}
+
+// Changes run one after another, so a fast slider drag ends on its last value.
+function crossfadeQueued(fn) {
+  const run = xfadeQueue.then(fn);
+  xfadeQueue = run.catch((e) => console.warn("[Klangbild] Crossfader:", e));
+  return run;
+}
+
+const listensForVoice = (config) => config.auto && config.trigger === "voice";
+
+// Whether A counts as playing for the automatic mode.
+function aPlaying(state) {
+  if (!state.audible) return false; // muted or silent: no voice can be heard either
+  if (!listensForVoice(state.config)) return true;
+  const reports = [...state.voices.values()].filter((r) => r.analysed);
+  return reports.length ? reports.some((r) => r.voice) : true;
+}
+
+function crossfadeGains(state) {
+  return AVFX.crossfadeGains(AVFX.crossfadePosition(state.config, aPlaying(state)));
+}
+
+async function crossfadeGainOf(tabId) {
+  if (tabId === undefined) return 1;
+  const state = await crossfadeState();
+  const gains = crossfadeGains(state);
+  return tabId === state.config.a ? gains.a : tabId === state.config.b ? gains.b : 1;
+}
+
+async function voiceWatchOf(tabId) {
+  if (tabId === undefined) return false;
+  const { config } = await crossfadeState();
+  return tabId === config.a && listensForVoice(config);
+}
+
+function sendFade(tabId, gain, time) {
+  if (tabId === null) return Promise.resolve();
+  return browser.tabs.sendMessage(tabId, { type: "media-fade", gain, time }).catch(() => {}); // all frames
+}
+
+function sendVoiceWatch(tabId, on) {
+  if (tabId === null) return Promise.resolve();
+  return browser.tabs.sendMessage(tabId, { type: "voice-watch", on }).catch(() => {});
+}
+
+function applyCrossfade(state, time) {
+  const gains = crossfadeGains(state);
+  return Promise.all([sendFade(state.config.a, gains.a, time), sendFade(state.config.b, gains.b, time)]);
+}
+
+function crossfadeInfo(state) {
+  const playing = aPlaying(state);
+  const position = AVFX.crossfadePosition(state.config, playing);
+  return {
+    config: state.config,
+    ducking: position !== state.config.position,
+    gains: AVFX.crossfadeGains(position),
+    aAudible: state.audible,
+    aVoice: listensForVoice(state.config) ? playing : null,
+  };
+}
+
+// A tab id that no longer exists (closed while the change was on its way) becomes null.
+async function existingTab(id) {
+  if (id === null) return null;
+  return (await browser.tabs.get(id).catch(() => null)) ? id : null;
+}
+
+async function changeCrossfade(input, time = XFADE_TIME.manual) {
+  const state = await crossfadeState();
+  const before = state.config;
+  const config = AVFX.sanitizeCrossfade(input);
+  if (config.a !== before.a) config.a = await existingTab(config.a);
+  if (config.b !== before.b) config.b = await existingTab(config.b);
+  // A tab that leaves the crossfader gets its full volume back.
+  for (const id of [before.a, before.b]) {
+    if (id !== null && id !== config.a && id !== config.b) sendFade(id, 1, XFADE_TIME.manual);
+  }
+  if (config.a !== before.a) {
+    state.audible = await tabPlaying(config.a);
+    state.voices = new Map();
+  }
+  const watchBefore = listensForVoice(before) ? before.a : null;
+  const watchNow = listensForVoice(config) ? config.a : null;
+  if (watchBefore !== watchNow) {
+    if (!listensForVoice(config) || config.a !== before.a) state.voices = new Map();
+    sendVoiceWatch(watchBefore, false);
+    sendVoiceWatch(watchNow, true);
+  }
+  state.config = config;
+  await browser.storage.session?.set({ [AVFX.CROSSFADE_KEY]: config }).catch(() => {});
+  await applyCrossfade(state, time);
+  return crossfadeInfo(state);
+}
+
+// Quick switch: tab A and B trade places, the slider stays. So their volumes trade too,
+// and with "Automatic" the other tab gets priority. A short fade, not a jump.
+function switchCrossfade() {
+  return crossfadeQueued(async () => {
+    const state = await crossfadeState();
+    const { config } = state;
+    if (config.a === null && config.b === null) return crossfadeInfo(state);
+    return changeCrossfade({ ...config, a: config.b, b: config.a }, XFADE_TIME.switch);
+  });
+}
+
+// input: the fields to change. Merged with the current config here, in the queue: the
+// mixer's copy may be behind (a quick switch by shortcut, a closed tab).
+function setCrossfade(input) {
+  return crossfadeQueued(async () => {
+    const { config } = await crossfadeState();
+    return changeCrossfade({ ...config, ...(input && typeof input === "object" ? input : {}) });
+  });
+}
+
+// Runs a change of A's state and fades when it starts or stops counting as playing.
+function updateA(tabId, change) {
+  return crossfadeQueued(async () => {
+    const state = await crossfadeState();
+    if (tabId !== state.config.a) return;
+    const before = aPlaying(state);
+    change(state);
+    const after = aPlaying(state);
+    if (state.config.auto && before !== after) await applyCrossfade(state, after ? XFADE_TIME.attack : XFADE_TIME.release);
+  });
+}
+
+function voiceState(msg, sender) {
+  const tabId = sender.tab?.id;
+  if (tabId === undefined) return undefined;
+  updateA(tabId, (state) => state.voices.set(sender.frameId ?? 0, { voice: msg.voice === true, analysed: msg.analysed === true }));
+  return true;
+}
+
+browser.tabs.onUpdated.addListener((id, change, tab) => {
+  // A new page in A starts without reports; its content script gets the watch on init.
+  if (change.status === "loading") updateA(id, (state) => state.voices.clear());
+  if (change.audible === undefined && change.mutedInfo === undefined) return;
+  updateA(id, (state) => {
+    state.audible = Boolean(tab?.audible && !tab.mutedInfo?.muted);
+  });
+});
+
+browser.tabs.onRemoved.addListener((id) => {
+  crossfadeQueued(async () => {
+    const { config } = await crossfadeState();
+    if (id === config.a || id === config.b) {
+      await changeCrossfade({ ...config, a: id === config.a ? null : config.a, b: id === config.b ? null : config.b });
+    }
+  });
+});
 
 // ---------- Continue watching ----------
 
@@ -155,6 +348,11 @@ async function download({ dataUrl, filename }) {
   }
 }
 
+// The sidebar or popup, not a content script (pages can't reach it, but stay strict).
+function fromExtensionPage(sender) {
+  return typeof sender?.url === "string" && sender.url.startsWith(browser.runtime.getURL(""));
+}
+
 AVFX.onMessage((msg, sender) => {
   switch (msg?.type) {
     case "init":
@@ -167,6 +365,14 @@ AVFX.onMessage((msg, sender) => {
     case "badge":
       if (sender.tab?.id !== undefined) setBadge(sender.tab.id, msg);
       return undefined;
+    case "crossfade-get":
+      return crossfadeState().then(crossfadeInfo);
+    case "crossfade-set":
+      return fromExtensionPage(sender) ? setCrossfade(msg.patch ?? msg.config) : undefined;
+    case "crossfade-switch":
+      return fromExtensionPage(sender) ? switchCrossfade() : undefined;
+    case "voice-state":
+      return voiceState(msg, sender);
   }
   return undefined;
 });
@@ -220,6 +426,13 @@ function settingsCommand(command, s) {
 }
 
 async function handleCommand(command, tab) {
+  if (command === "crossfade-switch") {
+    const { config } = await switchCrossfade();
+    const tabA = config.a === null ? null : await browser.tabs.get(config.a).catch(() => null);
+    const text = config.a === null && config.b === null ? AVFX.t("osdCrossfadeUnset") : AVFX.t("osdCrossfade", tabA?.title || "–");
+    browser.tabs.sendMessage(tab.id, { type: "osd", text }, { frameId: 0 }).catch(() => {});
+    return;
+  }
   const state = await AVFX.getTabState(tab.id); // also injects into tabs opened before installation
   if (state.disabled) return;
   const frame = await AVFX.findPrimaryFrame(tab.id).catch(() => null);
@@ -262,6 +475,7 @@ async function handleCommand(command, tab) {
 }
 
 browser.commands.onCommand.addListener(async (command, tab) => {
+  if (command === "sidebar") return; // Chrome's side panel: sidepanel.js
   tab ??= (await browser.tabs.query({ active: true, currentWindow: true }))[0];
   if (!tab) return;
   handleCommand(command, tab).catch((e) => console.warn("[Klangbild] Keyboard shortcut failed:", e));

@@ -1,11 +1,10 @@
-// Extras for the effect sliders. The thumb carries three rings and turns like a knob
-// around the point where it was grabbed: the ring it was grabbed by sets the step size –
-// inner 1 step per notch (fine), middle 5, outer 10 – one notch every 18°, clockwise up.
-// Hovering lights up the ring under the pointer and names its step size below the thumb.
+// Extras for the effect sliders. The thumb carries three rings: the ring it was grabbed by
+// sets the step size – inner 1 step (fine), middle 5, outer 10. Hovering lights up the ring
+// under the pointer and names its step size below the thumb.
 // Two modes (options page, prefs.knob):
-// - drag (default): pulled along the track the thumb drags – in steps of the ring it was
-//   grabbed by (1, 5 or 10) –; pulled up or down away from it, it turns.
-// - turn: a press on the thumb always turns.
+// - drag (default): the thumb follows the pointer along the track, in the ring's steps.
+// - turn: the thumb turns like a knob around the point where it was grabbed, one notch of
+//   the ring's steps every 18°, clockwise up.
 // Both: a click on the track jumps there, a double-click resets, the mouse wheel steps
 // (Shift: 10 steps), and a bubble above the thumb shows the value while it changes.
 
@@ -15,11 +14,7 @@ const DIAL = {
   inner: 0.42,
   middle: 0.72,
   dead: 6, // px around the center where the angle is too shaky to count
-  // Drag mode: a press turns once the pointer leaves the track's line by `turnAt` px, and
-  // drags once it went `dragAt` px along it without that – circling on the thumb's own
-  // rings leaves the line long before it got that far sideways.
-  turnAt: 6,
-  dragAt: 15,
+  dragAt: 3, // px along the track before a press drags: a mere click keeps the value
   wheelPauseMs: 400, // a wheel right after scrolling keeps scrolling the panel
   bubbleMs: 900,
 };
@@ -57,6 +52,13 @@ function stepBy(value, k, spec) {
   return AVFX.clamp(onGrid(anchor + (pos + k) * step, spec), min, max);
 }
 
+// stepBy() for the wheel and turning: never moves against the direction, so a value beyond
+// the bounds (extended limits switched off) stays instead of being pulled back in.
+function stepToward(value, k, spec) {
+  const next = stepBy(value, k, spec);
+  return (k > 0 ? next < value : next > value) ? value : next;
+}
+
 // "+3,5 dB", "1,25×", "120 %": signed where the slider goes below zero.
 function formatValue(v, c, spec) {
   const digits = Math.max(decimalsOf(spec.step), 0);
@@ -84,14 +86,6 @@ if (globalThis.browser?.storage) {
   browser.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && AVFX.PREFS_KEY in changes) setKnobMode({ ...AVFX.PREFS_DEFAULTS, ...changes[AVFX.PREFS_KEY].newValue }.knob);
   });
-}
-
-// Drag mode: drag or turn, from the movement (dx, dy) since a press – along the track is
-// a drag, away from it (up or down) a turn. null: not decided yet.
-function pressMode(dx, dy) {
-  if (Math.abs(dy) > DIAL.turnAt) return "turn";
-  if (Math.abs(dx) >= DIAL.dragAt) return "drag";
-  return null;
 }
 
 // Value at a pointer x on a slider (the thumb's center), on the step grid.
@@ -173,10 +167,10 @@ function enhanceSlider({ row, range, control: c, get, set, reset }) {
     return { center, d: Math.hypot(e.clientX - center.x, e.clientY - center.y) / (thumbSize() / 2) };
   };
 
-  // A press on the thumb turns it around the point where it was grabbed (the thumb moves
-  // along meanwhile, the center stays) – or, in drag mode, drags it if the pointer goes
-  // along the track first. A press on the track stays native.
-  let turn = null; // { id, x, y, startX, startY, angle, acc, ring, mode }
+  // A press on the thumb drags it, or in turn mode turns it around the point where it was
+  // grabbed (the thumb moves along meanwhile, the center stays). A press on the track
+  // stays native.
+  let turn = null; // { id, x, y, startX, angle, acc, ring, turns, dragging }
   const angleOf = (e) => (Math.atan2(e.clientY - turn.y, e.clientX - turn.x) * 180) / Math.PI;
   range.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
@@ -186,8 +180,7 @@ function enhanceSlider({ row, range, control: c, get, set, reset }) {
     e.preventDefault();
     range.focus({ preventScroll: true, focusVisible: false }); // arrow keys go on from here
     range.setPointerCapture(e.pointerId);
-    const mode = knobMode ? "turn" : null;
-    turn = { id: e.pointerId, ...center, startX: e.clientX, startY: e.clientY, acc: 0, ring: ringAt(d), mode };
+    turn = { id: e.pointerId, ...center, startX: e.clientX, acc: 0, ring: ringAt(d), turns: knobMode, dragging: false };
     turn.angle = angleOf(e);
     lightRing(turn.ring);
     showBubble();
@@ -201,8 +194,9 @@ function enhanceSlider({ row, range, control: c, get, set, reset }) {
   range.addEventListener("pointermove", (e) => {
     if (!turn) return hover(e);
     if (e.pointerId !== turn.id) return;
-    turn.mode ??= pressMode(e.clientX - turn.startX, e.clientY - turn.startY);
-    if (turn.mode === "drag") {
+    if (!turn.turns) {
+      turn.dragging ||= Math.abs(e.clientX - turn.startX) >= DIAL.dragAt;
+      if (!turn.dragging) return;
       const s = spec();
       change(snapTo(valueAt(range, e.clientX - (turn.startX - turn.x), s), RING_STEPS[turn.ring], s));
       return lightRing(turn.ring); // the tip follows the thumb
@@ -217,9 +211,9 @@ function enhanceSlider({ row, range, control: c, get, set, reset }) {
     turn.angle = a;
     const notchDeg = 360 / DIAL.notches;
     const notches = Math.trunc(turn.acc / notchDeg + Math.sign(turn.acc) * 1e-6);
-    if (notches && turn.mode === "turn") {
+    if (notches) {
       turn.acc -= notches * notchDeg;
-      change(stepBy(get(), notches * RING_STEPS[turn.ring], spec()));
+      change(stepToward(get(), notches * RING_STEPS[turn.ring], spec()));
       lightRing(turn.ring); // the tip follows the thumb
     }
   });
@@ -249,7 +243,7 @@ function enhanceSlider({ row, range, control: c, get, set, reset }) {
       const delta = e.deltaY || e.deltaX;
       if (!delta) return;
       e.preventDefault();
-      change(stepBy(get(), (delta < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1), spec()));
+      change(stepToward(get(), (delta < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1), spec()));
     },
     { passive: false }
   );

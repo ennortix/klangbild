@@ -51,7 +51,7 @@
     "message": "Regler"
   },
   "sliderModeHint": {
-    "message": "Die Ringe auf dem Punkt bestimmen die Schrittweite: innen angefasst ±1 (fein), Mitte ±5, außen ±10. Ziehen: seitlich entlang der Schiene wird der Punkt in diesen Schritten verschoben, nach oben/unten weggezogen und gekreist wird gedreht (im Uhrzeigersinn mehr). Drehen: Anfassen dreht immer."
+    "message": "Die Ringe auf dem Punkt bestimmen die Schrittweite: innen angefasst ±1 (fein), Mitte ±5, außen ±10. Ziehen: Der Punkt folgt dem Zeiger entlang der Schiene in diesen Schritten. Drehen: Der Punkt wird wie ein Drehknopf gedreht (im Uhrzeigersinn mehr)."
   },
   "sliderDrag": {
     "message": "Ziehen"
@@ -60,7 +60,7 @@
     "message": "Drehen"
   },
   "sliderHintDrag": {
-    "message": "Innen angefasst ±1, Mitte ±5, außen ±10 · seitlich ziehen: in diesen Schritten verschieben · nach oben/unten wegziehen und kreisen: drehen · Doppelklick: zurücksetzen · Mausrad: ändern (Shift: 10 Schritte)"
+    "message": "Innen angefasst ±1, Mitte ±5, außen ±10 · seitlich ziehen: in diesen Schritten verschieben · Doppelklick: zurücksetzen · Mausrad: ändern (Shift: 10 Schritte)"
   },
   "sliderHintTurn": {
     "message": "Punkt wie einen Drehknopf drehen: innen angefasst ±1, Mitte ±5, außen ±10 – im Uhrzeigersinn mehr · Klick auf die Schiene: dorthin springen · Doppelklick: zurücksetzen · Mausrad: ändern (Shift: 10 Schritte)"
@@ -770,6 +770,21 @@
   "ruleAdded": {
     "message": "Regel gespeichert – sie gilt ab dem nächsten Laden der Seite."
   },
+  "ytVolume": {
+    "message": "YouTube-Lautstärke festhalten"
+  },
+  "ytVolumeHint": {
+    "message": "YouTube spielt laut abgemischte Videos leiser, als der Regler im Player anzeigt. Eingeschaltet spielt jedes Video genau so laut, wie der Regler steht – laut abgemischte Videos werden dadurch lauter. Nach dem Ausschalten gilt YouTubes eigener Wert wieder, sobald du den Regler bewegst oder ein neues Video lädst."
+  },
+  "ytVolumeOn": {
+    "message": "Lautstärke festhalten"
+  },
+  "ytSmoothHint": {
+    "message": "Manchmal stellt YouTube die Lautstärke erst ein, zwei Sekunden nach dem Start des nächsten Videos um – der Ton springt dann plötzlich. Eingeschaltet senkt Klangbild ein lautes Video schon zu Beginn so weit ab, wie YouTube es später tut, und blendet übrige Sprünge weich über, statt sie hart durchzulassen. Deine eigenen Änderungen am Regler wirken weiter sofort."
+  },
+  "ytSmoothOn": {
+    "message": "Lautstärkesprünge abfedern"
+  },
   "continueWatching": {
     "message": "Weiterschauen"
   },
@@ -781,5 +796,287 @@
   },
   "forgetPositions": {
     "message": "$1 gespeicherte Positionen löschen"
+  },
+  "crossfader": {
+    "message": "Crossfader"
+  },
+  "crossfadeHint": {
+    "message": "Blendet zwischen zwei Tabs über: nach links wird B leiser, nach rechts A, in der Mitte spielen beide voll. Kopiergeschützte Medien bleiben unverändert."
+  },
+  "crossfadeNone": {
+    "message": "– kein Tab –"
+  },
+  "crossfadeLevels": {
+    "message": "A $1 % · B $2 %"
+  },
+  "crossfadeAuto": {
+    "message": "Automatisch"
+  },
+  "crossfadeAutoHint": {
+    "message": "Automatisch: Solange A Ton abspielt, wird B leiser. Wird A still, kommt B wieder auf die Lautstärke am Regler."
+  },
+  "crossfadeDuck": {
+    "message": "B, während A spielt"
+  },
+  "crossfadeDucking": {
+    "message": "A spielt – B ist abgesenkt."
+  },
+  "crossfadeTabATip": {
+    "message": "Tab A – links am Regler. Bei „Automatisch“ hat er Vorrang, z. B. ein Podcast oder Anruf."
+  },
+  "crossfadeTabBTip": {
+    "message": "Tab B – rechts am Regler. Bei „Automatisch“ wird er leiser, solange A spielt, z. B. Musik."
+  },
+  "crossfadeSliderTip": {
+    "message": "Nach links wird B leiser, nach rechts A. In der Mitte spielen beide voll. Doppelklick: Mitte."
+  },
+  "crossfadeOnlyA": {
+    "message": "Nur Tab A hören"
+  },
+  "crossfadeOnlyB": {
+    "message": "Nur Tab B hören"
+  },
+  "crossfadeSwitch": {
+    "message": "A ⇄ B"
+  },
+  "crossfadeSwitchTip": {
+    "message": "Quick-Switch: Tab A und Tab B tauschen die Plätze, der Regler bleibt stehen – damit tauschen auch ihre Lautstärken, und bei „Automatisch“ hat danach der andere Tab Vorrang. Geht auch per Tastenkürzel (unter about:addons → Zahnrad → Tastenkombinationen verwalten festlegen)."
+  },
+  "crossfadeAutoTip": {
+    "message": "Senkt B automatisch ab, solange A Ton abspielt, und hebt B danach wieder an."
+  },
+  "crossfadeDuckTip": {
+    "message": "So laut bleibt B, während A spielt. Doppelklick: 25 %."
+  },
+  "crossfadeLevelsTip": {
+    "message": "Aktuelle Lautstärke der beiden Tabs, die automatische Absenkung eingerechnet"
+  },
+  "crossfadeRoleA": {
+    "message": "Tab A des Crossfaders"
+  },
+  "crossfadeRoleB": {
+    "message": "Tab B des Crossfaders"
+  },
+  "cmdCrossfadeSwitch": {
+    "message": "Crossfader: Tab A und B tauschen"
+  },
+  "osdCrossfade": {
+    "message": "Crossfader getauscht – A: $1"
+  },
+  "osdCrossfadeUnset": {
+    "message": "Crossfader: erst im Mischpult Tab A und B wählen"
+  },
+  "muteTabTip": {
+    "message": "Schaltet den ganzen Tab im Browser stumm – wirkt auch bei kopiergeschützten Medien."
+  },
+  "mixerStateTip": {
+    "message": "Abspielposition"
+  },
+  "mixerLevelTip": {
+    "message": "Pegel dieses Mediums"
+  },
+  "mixerGainTip": {
+    "message": "Lautstärke dieses Mediums, zusätzlich zu den Einstellungen des Tabs. Doppelklick: 100 %."
+  },
+  "mixerMuteTip": {
+    "message": "Nur dieses Medium stummschalten"
+  },
+  "mixerDetect": {
+    "message": "Stimmen & Doppelte erkennen"
+  },
+  "mixerDetectTip": {
+    "message": "Markiert bei jedem laufenden Medium, ob eine Stimme oder anderer Ton zu hören ist, und zeigt, wenn zwei Medien dasselbe abspielen. Wertet den Originalton lokal aus, nichts verlässt den Rechner. Nicht möglich bei kopiergeschützten Medien, Medien fremder Server ohne CORS und Anrufen."
+  },
+  "mixerVoice": {
+    "message": "Stimme"
+  },
+  "mixerVoiceTip": {
+    "message": "Hier ist gerade eine Stimme zu hören (Sprachbereich, Silbenrhythmus, Mitte des Stereobilds). Eine Schätzung ohne KI: Gesang über leiser Musik zählt oft auch als Stimme."
+  },
+  "mixerSound": {
+    "message": "Ton"
+  },
+  "mixerSoundTip": {
+    "message": "Hier ist Ton zu hören, aber keine erkennbare Stimme – z. B. Musik oder Geräusche."
+  },
+  "mixerDuplicate": {
+    "message": "Dasselbe wie „$1“ – $2."
+  },
+  "mixerDuplicateSame": {
+    "message": "gleichzeitig"
+  },
+  "mixerDuplicateLater": {
+    "message": "$1 s später"
+  },
+  "mixerDuplicateEarlier": {
+    "message": "$1 s früher"
+  },
+  "mixerDuplicateTip": {
+    "message": "Diese beiden Medien spielen denselben Ton – erkannt am Lautstärkeverlauf der letzten Sekunden. Versetzt laufen sie als Echo."
+  },
+  "mixerDuplicateMuteTip": {
+    "message": "Dieses Medium stummschalten, damit nur noch eins zu hören ist"
+  },
+  "crossfadeTrigger": {
+    "message": "Auslöser:"
+  },
+  "crossfadeTriggerTip": {
+    "message": "Wann gilt Tab A für die Automatik als „spielt“?"
+  },
+  "crossfadeTriggerSound": {
+    "message": "Jeder Ton"
+  },
+  "crossfadeTriggerSoundTip": {
+    "message": "B wird leiser, sobald A irgendeinen Ton abspielt."
+  },
+  "crossfadeTriggerVoice": {
+    "message": "Nur Stimme"
+  },
+  "crossfadeTriggerVoiceTip": {
+    "message": "B wird nur leiser, wenn in A eine Stimme zu hören ist – Musik oder Geräusche in A lassen B in Ruhe. Bei kopiergeschützten Medien und Anrufen kann A nicht ausgewertet werden, dann zählt jeder Ton."
+  },
+  "crossfadeDuckingVoice": {
+    "message": "In A spricht jemand – B ist abgesenkt."
+  },
+  "crossfadeAutoVoiceHint": {
+    "message": "Automatisch (nur Stimme): Sobald in A eine Stimme zu hören ist, wird B leiser. Ist sie still, kommt B wieder auf die Lautstärke am Regler."
+  },
+  "moduleSync": {
+    "message": "Ton & Bild synchron"
+  },
+  "moduleLevel": {
+    "message": "Lautstärke & Stereo"
+  },
+  "moduleSound": {
+    "message": "Klang"
+  },
+  "moduleTransport": {
+    "message": "Steuerung"
+  },
+  "itemQuick": {
+    "message": "Schnellwahl"
+  },
+  "itemBuiltin": {
+    "message": "Eingebaute Presets"
+  },
+  "itemPosition": {
+    "message": "Position"
+  },
+  "itemControls": {
+    "message": "Tasten"
+  },
+  "itemVideoInfo": {
+    "message": "Videoinfo"
+  },
+  "itemStatus": {
+    "message": "Status"
+  },
+  "itemHint": {
+    "message": "Hinweis"
+  },
+  "itemMedia": {
+    "message": "Medien"
+  },
+  "pageStart": {
+    "message": "Start"
+  },
+  "pagePlayback": {
+    "message": "Tempo"
+  },
+  "newPage": {
+    "message": "Neue Seite"
+  },
+  "addPage": {
+    "message": "Seite hinzufügen"
+  },
+  "pageName": {
+    "message": "Name der Seite"
+  },
+  "movePageLeft": {
+    "message": "Seite nach links"
+  },
+  "movePageRight": {
+    "message": "Seite nach rechts"
+  },
+  "deletePage": {
+    "message": "Seite löschen (ihre Module bleiben unter „Modul hinzufügen“)"
+  },
+  "startEmpty": {
+    "message": "Noch nichts angeheftet. Mit dem Stern ☆ auf einer Karte kommt ein Modul hierher."
+  },
+  "pageEmpty": {
+    "message": "Diese Seite ist leer. Über „Layout bearbeiten“ (Stift oben) fügst du Module hinzu."
+  },
+  "moduleEmpty": {
+    "message": "Alle Elemente dieses Moduls sind ausgeblendet."
+  },
+  "collapse": {
+    "message": "Einklappen"
+  },
+  "expand": {
+    "message": "Ausklappen"
+  },
+  "pin": {
+    "message": "An Start anheften"
+  },
+  "unpin": {
+    "message": "Von Start lösen"
+  },
+  "removeModule": {
+    "message": "Von dieser Seite entfernen"
+  },
+  "moveTo": {
+    "message": "Auf eine andere Seite verschieben"
+  },
+  "dragHint": {
+    "message": "Ziehen zum Verschieben – auf einen Tab für eine andere Seite. Pfeiltasten verschieben schrittweise."
+  },
+  "hideItem": {
+    "message": "„$1“ ausblenden"
+  },
+  "showItem": {
+    "message": "„$1“ einblenden"
+  },
+  "editLayout": {
+    "message": "Layout bearbeiten"
+  },
+  "editDone": {
+    "message": "Fertig"
+  },
+  "editHint": {
+    "message": "Karten und Elemente am Griff ⠿ ziehen, das Auge blendet Elemente aus. Eine Karte auf einen Tab ziehen verschiebt sie auf diese Seite."
+  },
+  "resetLayout": {
+    "message": "Layout zurücksetzen"
+  },
+  "addModule": {
+    "message": "Modul hinzufügen"
+  },
+  "notPlaced": {
+    "message": "auf keiner Seite"
+  },
+  "moveFrom": {
+    "message": "verschieben von $1"
+  },
+  "allModulesHere": {
+    "message": "Alle Module sind schon auf dieser Seite."
+  },
+  "viewTitle": {
+    "message": "Darstellung"
+  },
+  "view_list": {
+    "message": "Liste"
+  },
+  "view_knobs": {
+    "message": "Regler"
+  },
+  "view_faders": {
+    "message": "Fader"
+  },
+  "view_tiles": {
+    "message": "Kacheln"
+  },
+  "dialTypeValue": {
+    "message": "Klicken, um einen Wert einzugeben"
   }
 }

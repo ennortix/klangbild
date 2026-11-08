@@ -27,6 +27,7 @@
   const media = new Set(); // tracked elements; detached paused ones are pruned
   const listened = new WeakSet(); // elements that already carry our event listeners
   const chains = new WeakMap(); // element -> Web Audio nodes
+  const sources = new WeakMap(); // element -> its MediaElementAudioSourceNode, outlives a released chain
   const audioBlocked = new WeakSet(); // createMediaElementSource failed, e.g. element taken by an older extension instance
   // Marks routed elements in the page, so a later instance that can't reach the routing
   // (Firefox after an update) knows at once, before the user moves a slider in vain.
@@ -44,6 +45,9 @@
   const mixes = new WeakMap(); // element -> { gain: %, muted, native?, base? }
   const mediaIds = new WeakMap(); // element -> id for the mixer
   let nextMediaId = 1;
+  // The mixer's crossfader (kept by the background page): a factor 0..1 for all media of
+  // the tab, on top of each element's own mix.
+  let tabFade = 1;
 
   // DRM media (Prime Video, Netflix, …): Firefox outputs silence once such an element is
   // routed through Web Audio and refuses to hand out its frames, so we never touch them.
@@ -153,21 +157,24 @@
 
   function buildChain(el) {
     const ac = getAudioContext();
-    let source;
-    try {
-      source = ac.createMediaElementSource(el);
-    } catch (e) {
-      // An element can be routed only once; after an extension update the old
-      // instance still owns it until the page is reloaded.
-      console.warn("[Klangbild] Audio routing not possible:", e);
-      audioBlocked.add(el);
-      return null;
+    let source = sources.get(el); // the chain was released, see releaseChain()
+    if (!source) {
+      try {
+        source = ac.createMediaElementSource(el);
+      } catch (e) {
+        // An element can be routed only once; after an extension update the old
+        // instance still owns it until the page is reloaded.
+        console.warn("[Klangbild] Audio routing not possible:", e);
+        audioBlocked.add(el);
+        return null;
+      }
+      sources.set(el, source);
+      routedElsewhere.delete(el); // e.g. a copy of a routed element made by the page
+      try {
+        el.setAttribute(ROUTED_ATTR, "");
+      } catch {}
+      el.addEventListener(AUDIO_EVENT, serveAudio);
     }
-    routedElsewhere.delete(el); // e.g. a copy of a routed element made by the page
-    try {
-      el.setAttribute(ROUTED_ATTR, "");
-    } catch {}
-    el.addEventListener(AUDIO_EVENT, serveAudio);
 
     const delay = ac.createDelay(AVFX.LIMITS.audioDelay[1] / 1000);
     const highpass = biquad(ac, "highpass", 10); // voice mode raises it to cut rumble
@@ -237,6 +244,7 @@
     analyser.connect(ac.destination);
 
     const chain = {
+      source, splitter, merger,
       delay, highpass, bass, mid, treble, presence, stereoMix, matrix, autoGain, autoGainMeter, panner,
       compressor, gain, limiter, analyser,
       autoGainOn: false, autoGainState: { power: null, gain: 0 },
@@ -244,9 +252,29 @@
       dialog: null, // { node, set(amount) }, created on first use, see setDialog()
       dialogOn: false, dialogAmount: 0, dialogLoading: false,
       compressorOn: null, limiterOn: null, reverbOn: null,
+      released: false,
     };
     setRouting(chain, false, false, false);
     return chain;
+  }
+
+  // Frees the nodes of an element that left the page: the delay line and a convolver alone
+  // hold megabytes, and connected nodes stay alive with the AudioContext. The source can't
+  // be made twice, so it is kept (it lives as long as the element) and a chain is built on
+  // it again if the element comes back, see applyAudio().
+  function releaseChain(el) {
+    const chain = chains.get(el);
+    if (!chain) return;
+    chains.delete(el);
+    chain.released = true;
+    chain.dialog?.stop();
+    const nodes = [
+      chain.source, chain.splitter, chain.merger, chain.delay, chain.highpass, chain.bass, chain.mid, chain.treble,
+      chain.presence, chain.stereoMix, ...chain.matrix.flat(), chain.autoGain, chain.autoGainMeter, chain.panner,
+      chain.compressor, chain.gain, chain.limiter, chain.analyser, chain.reverb?.convolver, chain.reverb?.wet, chain.dialog?.node,
+      chain.detector?.tap, chain.detector?.split,
+    ];
+    for (const node of nodes) node?.disconnect();
   }
 
   let reverbBuffer = null;
@@ -303,12 +331,14 @@
   }
 
   // mixGain: the mixer's factor; an old instance gets it from the new one, see serveAudio().
-  function applyAudio(el, s, force = false, mixGain = mixFactor(el)) {
+  // ramp: time constant of the volume change (the crossfader fades more slowly).
+  function applyAudio(el, s, force = false, mixGain = mixFactor(el), ramp = RAMP) {
     if (remote.has(el) && applyRemote(el, s)) return;
     let chain = chains.get(el);
     if (!chain) {
       // Routing through Web Audio is permanent for an element, so only do it when needed.
-      if (!force && !needsAudioGraph(s) && !mixActive(el)) return;
+      // A routed element whose chain was released is silent without a new one.
+      if (!force && !needsAudioGraph(s) && !mixActive(el) && !sources.has(el)) return;
       // Wait for metadata: by then a DRM player has announced itself and is left alone.
       // The loadedmetadata listener calls us again.
       if (isProtected(el) || audioBlocked.has(el) || el.readyState < HTMLMediaElement.HAVE_METADATA) return;
@@ -318,9 +348,10 @@
     }
 
     const t = audioCtx.currentTime;
-    chain.gain.gain.setTargetAtTime((s.volume / 100) * mixGain, t, RAMP);
+    chain.gain.gain.setTargetAtTime((s.volume / 100) * mixGain, t, ramp);
     setDialog(chain, s.dialog);
-    chain.delay.delayTime.setTargetAtTime(Math.max(0, s.audioDelay) / 1000, t, RAMP);
+    chain.audioDelay = s.audioDelay;
+    setChainDelay(chain);
     chain.highpass.frequency.setTargetAtTime(s.voice ? 120 : 10, t, RAMP);
     chain.bass.gain.setTargetAtTime(s.bass, t, RAMP);
     chain.mid.gain.setTargetAtTime(s.mid, t, RAMP);
@@ -376,7 +407,7 @@
           channelCountMode: "explicit",
           channelInterpretation: "speakers",
         });
-        return { node, kind, set: (amount) => node.port.postMessage(amount) };
+        return { node, kind, set: (amount) => node.port.postMessage(amount), stop: () => node.port.postMessage(null) };
       } catch (e) {
         console.info("[Klangbild] AudioWorkletNode failed, using a ScriptProcessor:", e);
       }
@@ -390,7 +421,22 @@
       const o = e.outputBuffer;
       dsp.process(i.getChannelData(0), i.getChannelData(1), o.getChannelData(0), o.getChannelData(1));
     };
-    return { node, kind: "script", set: (amount) => dsp.setAmount(amount) };
+    return { node, kind: "script", set: (amount) => dsp.setAmount(amount), stop: () => (node.onaudioprocess = null) };
+  }
+
+  // Seconds the voice/background separation holds the sound back: one FFT block, plus the
+  // buffer of a ScriptProcessor.
+  function dialogLatency(chain) {
+    if (!chain.dialogOn) return 0;
+    return (AVFXDialog.SIZE + (chain.dialog.kind === "script" ? 1024 : 0)) / audioCtx.sampleRate;
+  }
+
+  // The A/V sync delay, minus what the separation already holds back. Below that the
+  // sound can't be made earlier (the picture isn't delayed for ~21 ms, it's within lip
+  // sync tolerance).
+  function setChainDelay(chain) {
+    const seconds = Math.max(0, (chain.audioDelay ?? 0) / 1000 - dialogLatency(chain));
+    chain.delay.delayTime.setTargetAtTime(seconds, audioCtx.currentTime, RAMP);
   }
 
   // delay -> [dialog] -> highpass. At 0 the node is taken out of the chain, so it adds
@@ -402,6 +448,7 @@
       if (!chain.dialogLoading) {
         chain.dialogLoading = true;
         loadDialog(audioCtx).then((kind) => {
+          if (chain.released) return;
           chain.dialog = createDialog(audioCtx, kind);
           chain.dialogLoading = false;
           setDialog(chain, chain.dialogAmount); // the slider may have moved meanwhile
@@ -420,18 +467,26 @@
       chain.delay.connect(chain.highpass);
     }
     chain.dialogOn = on;
+    setChainDelay(chain);
   }
 
   // ---------- Mixer ----------
 
   function mixActive(el) {
     const m = mixes.get(el);
-    return Boolean(m) && !m.native && (m.muted || m.gain !== 100);
+    if (m && !m.native && (m.muted || m.gain !== 100)) return true;
+    return tabFade !== 1 && !nativeMix(el);
   }
 
   function mixFactor(el) {
     const m = mixes.get(el);
-    return !m || m.native ? 1 : m.muted ? 0 : m.gain / 100;
+    if (m?.native) return 1;
+    return (m?.muted ? 0 : (m?.gain ?? 100) / 100) * tabFade;
+  }
+
+  // Mixed through the element's own volume, see crossOriginRisk().
+  function nativeMix(el) {
+    return mixes.get(el)?.native ?? (!routed(el) && crossOriginRisk(el));
   }
 
   // Media from another origin without CORS permission: Web Audio would only get silence.
@@ -447,11 +502,20 @@
 
   function applyNativeMix(el, m) {
     if (m.base === undefined) m.base = el.volume;
-    el.volume = m.muted ? 0 : AVFX.clamp(m.base * (m.gain / 100), 0, 1);
-    if (!m.muted && m.gain === 100) {
+    el.volume = m.applied = m.muted ? 0 : AVFX.clamp(m.base * (m.gain / 100) * tabFade, 0, 1);
+    if (!m.muted && m.gain === 100 && tabFade === 1) {
       el.volume = m.base; // back to neutral: forget the override
       mixes.delete(el);
     }
+  }
+
+  // The page set its own volume (its slider, a new video): that is the new base, our
+  // factor goes on top of it again instead of being lost.
+  function onNativeVolume(el) {
+    const m = mixes.get(el);
+    if (!m?.native || retired || sleep?.volumes.has(el) || Math.abs(el.volume - m.applied) < 1e-6) return;
+    m.base = el.volume;
+    applyNativeMix(el, m);
   }
 
   function mediaId(el) {
@@ -474,8 +538,13 @@
   }
 
   // Elements of this frame for the sidebar's mixer, with their level in dBFS.
-  function mediaList() {
+  // detect: the mixer wants voice and duplicate detection (keeps it running a while).
+  function mediaList(detect = false) {
     if (disabledHere) return { disabled: true };
+    if (detect === true && !retired) {
+      detectUntil = Date.now() + 5000;
+      startDetection();
+    }
     prune();
     const primary = primaryMedia()?.el;
     return [...media]
@@ -501,6 +570,8 @@
           hasAudioChain: audio,
           native: !audio && crossOriginRisk(el), // mixed through el.volume, up to 100 %
           dialog: chain?.dialogOn ? chain.dialog.kind : null, // "worklet" | "script"
+          analysable: canAnalyse(el),
+          ...(detect === true ? detection(el) : {}),
         };
       });
   }
@@ -541,14 +612,242 @@
     return { ok: true };
   }
 
+  // The crossfader's factor on one element. DRM media can't be changed (only tab mute).
+  function applyFade(el, ramp = RAMP) {
+    if (isProtected(el) || audioLocked(el)) return;
+    if (!nativeMix(el)) {
+      applyAudio(el, effective(), false, mixFactor(el), ramp);
+      return;
+    }
+    if (!mixes.has(el) && tabFade === 1) return;
+    const m = mixes.get(el) ?? { gain: 100, muted: false, native: true };
+    mixes.set(el, m);
+    applyNativeMix(el, m);
+  }
+
+  // time: seconds until the new volume is (nearly) reached.
+  function setFade(gain, time) {
+    const next = Number.isFinite(gain) ? AVFX.clamp(gain, 0, 1) : 1;
+    if (next === tabFade) return;
+    tabFade = next;
+    const ramp = Number.isFinite(time) ? Math.max(RAMP, AVFX.clamp(time, 0, 10) / 3) : RAMP;
+    prune();
+    for (const el of media) applyFade(el, ramp);
+  }
+
+  // ---------- Detection (mixer): voice and duplicate audio ----------
+
+  // Runs while the mixer looks (it asks every 0.4 s) or while this tab is the crossfader's
+  // A with the trigger "voice". Measures the raw sound of each playing element, so the
+  // tab's effects and the mixer's volume don't change the result. Needs the element in
+  // Web Audio: DRM media, media from other servers without CORS and WebRTC streams
+  // (calls; Chrome would silence them) are not analysed.
+  const DETECT_MS = 500;
+  const DETECT_WINDOW = 32768; // samples, ~0.7 s
+  const detectors = new WeakMap(); // element -> state, see detectorFor()
+  let detectUntil = 0; // the mixer asked until then
+  let voiceWatch = false;
+  let detectTimer = 0;
+  let voiceReport = null; // last report to the background page, as JSON
+  let voiceReportAt = 0;
+
+  function canAnalyse(el) {
+    return (
+      !isProtected(el) &&
+      !audioLocked(el) &&
+      !remote.has(el) &&
+      !el.srcObject &&
+      !nativeMix(el) &&
+      el.readyState >= HTMLMediaElement.HAVE_METADATA
+    );
+  }
+
+  // Analysers on the element's source, before any effect; rebuilt with a new chain.
+  function detectorFor(el) {
+    const chain = chains.get(el);
+    if (!chain) return null;
+    if (chain.detector) return chain.detector;
+    const ac = audioCtx;
+    const tap = ac.createGain();
+    tap.channelCountMode = "explicit";
+    tap.channelInterpretation = "speakers";
+    tap.channelCount = 2; // mono sources: the same signal left and right
+    const split = ac.createChannelSplitter(2);
+    const left = ac.createAnalyser();
+    const right = ac.createAnalyser();
+    for (const an of [left, right]) {
+      an.fftSize = DETECT_WINDOW;
+      an.smoothingTimeConstant = 0;
+    }
+    chain.source.connect(tap);
+    tap.connect(split);
+    split.connect(left, 0);
+    split.connect(right, 1);
+    const old = detectors.get(el); // the history survives a rebuilt chain
+    chain.detector = {
+      tap,
+      split,
+      left,
+      right,
+      l: new Float32Array(DETECT_WINDOW),
+      r: new Float32Array(DETECT_WINDOW),
+      fl: new Float32Array(DETECT_WINDOW / 2),
+      fr: new Float32Array(DETECT_WINDOW / 2),
+      levels: old?.levels ?? new Map(), // frame grid index -> dB
+      votes: [],
+      lastVoice: 0,
+      voice: false,
+      sound: false,
+      features: null,
+      measuredAt: 0, // Date.now() of the last measurement
+      since: 0, // frame grid index from which the window holds sound of the running media
+      started: false, // a frame above the floor came since then
+    };
+    detectors.set(el, chain.detector);
+    return chain.detector;
+  }
+
+  // Wall-clock ms at which the newest analysed sample of the chain is heard (same clock
+  // in every tab).
+  function heardAtMs(chain) {
+    const ts = audioCtx.getOutputTimestamp?.();
+    const ahead = ts && ts.contextTime > 0 ? (audioCtx.currentTime - ts.contextTime) * 1000 : 0;
+    const now = ts?.performanceTime > 0 ? ts.performanceTime : performance.now();
+    const held = Math.max(0, chain.audioDelay ?? 0, dialogLatency(chain) * 1000);
+    return performance.timeOrigin + now + ahead + held;
+  }
+
+  function measure(d, chain) {
+    const { VOICE, DUPLICATE } = AVFX;
+    d.left.getFloatTimeDomainData(d.l);
+    d.right.getFloatTimeDomainData(d.r);
+    const rate = audioCtx.sampleRate;
+    const frames = AVFX.frameLevels(d.l, d.r, rate, VOICE.frameMs);
+    const lastIndex = Math.round(heardAtMs(chain) / VOICE.frameMs);
+    // Just started, resumed or detection restarted: the window still holds the silence
+    // from before (it would look like speech pauses), so only later frames count.
+    const now = Date.now();
+    if (now - d.measuredAt > DETECT_MS * 3) {
+      d.since = lastIndex;
+      d.started = false;
+      d.votes = [];
+    }
+    d.measuredAt = now;
+    for (let i = 0; i < frames.length; i++) {
+      const index = lastIndex - (frames.length - 1 - i);
+      if (index <= d.since) continue;
+      // the sound reaches a new routing a few frames late: leading silence doesn't count
+      if (!d.started && frames[i] <= VOICE.floor) continue;
+      d.started = true;
+      d.levels.set(index, Math.round(Math.max(VOICE.clamp, frames[i]) * 10) / 10);
+    }
+    const oldest = lastIndex - DUPLICATE.keepMs / VOICE.frameMs;
+    for (const k of d.levels.keys()) if (k < oldest) d.levels.delete(k);
+
+    const count = VOICE.historyMs / VOICE.frameMs;
+    const recent = Array.from({ length: count }, (_, i) => d.levels.get(lastIndex - count + 1 + i) ?? NaN);
+    let sum = 0;
+    for (const v of d.l) sum += v * v;
+    for (const v of d.r) sum += v * v;
+    const level = 10 * Math.log10(sum / (2 * d.l.length) + 1e-12);
+    d.sound = level > VOICE.floor;
+    let voiced = false;
+    if (d.sound) {
+      d.left.getFloatFrequencyData(d.fl);
+      d.right.getFloatFrequencyData(d.fr);
+      const share = AVFX.bandShare(d.fl, d.fr, rate / DETECT_WINDOW, VOICE.bandLo, VOICE.bandHi);
+      const std = AVFX.levelSpread(recent, VOICE.clamp);
+      const corr = AVFX.channelCorrelation(d.l, d.r);
+      d.features = { level, share, std, corr };
+      voiced = AVFX.isVoice(d.features);
+    }
+    // 2 of the last 3 windows, then held for a moment (pauses between sentences)
+    d.votes = [...d.votes.slice(-2), voiced];
+    if (d.votes.filter(Boolean).length >= 2) d.lastVoice = now;
+    d.voice = now - d.lastVoice < VOICE.holdMs;
+  }
+
+  function detectTick() {
+    if (!voiceWatch && Date.now() > detectUntil) {
+      clearInterval(detectTimer);
+      detectTimer = 0;
+      return;
+    }
+    let voice = false;
+    let analysed = false;
+    prune();
+    for (const el of media) {
+      if (el.paused || !canAnalyse(el)) continue;
+      if (!chains.has(el)) {
+        // Routed into a context the autoplay policy holds suspended, the element would go
+        // silent: detection only takes it over once the context runs.
+        if (getAudioContext().state !== "running") continue;
+        applyAudio(el, effective(), true);
+      }
+      const d = detectorFor(el);
+      if (!d) continue;
+      try {
+        measure(d, chains.get(el));
+      } catch (e) {
+        console.warn("[Klangbild] Detection failed:", e);
+        continue;
+      }
+      analysed = true;
+      if (d.voice) voice = true;
+    }
+    if (voiceWatch) reportVoice({ voice, analysed });
+  }
+
+  // To the background page on a change, and every 10 s (it may have been unloaded).
+  function reportVoice(state) {
+    const json = JSON.stringify(state);
+    if (json === voiceReport && Date.now() - voiceReportAt < 10_000) return;
+    voiceReport = json;
+    voiceReportAt = Date.now();
+    browser.runtime.sendMessage({ type: "voice-state", ...state }).catch(() => {});
+  }
+
+  function startDetection() {
+    if (!detectTimer && !retired && !disabledHere) detectTimer = setInterval(detectTick, DETECT_MS);
+  }
+
+  function setVoiceWatch(on) {
+    voiceWatch = on === true;
+    voiceReport = null;
+    if (voiceWatch) {
+      startDetection();
+      detectTick();
+    }
+  }
+
+  // For the mixer: voice/sound of the element and its level history for duplicates.
+  function detection(el) {
+    const d = detectors.get(el);
+    // Not measured lately (detection was off): the values are from back then.
+    const stale = !d || Date.now() - d.measuredAt > DETECT_MS * 3;
+    if (stale || el.paused || !chains.has(el)) return { voice: null, sound: null, levels: null };
+    const { VOICE, DUPLICATE } = AVFX;
+    const count = DUPLICATE.sendMs / VOICE.frameMs;
+    let last = 0;
+    for (const k of d.levels.keys()) if (k > last) last = k;
+    const start = last - count + 1;
+    const values = Array.from({ length: count }, (_, i) => d.levels.get(start + i) ?? null);
+    const round = (v) => Math.round(v * 100) / 100;
+    const features = d.features && Object.fromEntries(Object.entries(d.features).map(([k, v]) => [k, round(v)]));
+    return { voice: d.sound && d.voice, sound: d.sound, levels: { start, values }, features };
+  }
+
   // ---------- Loudness leveling ----------
 
   const AUTO_GAIN_INTERVAL_MS = 100;
   let autoGainTimer = 0;
   let autoGainLast = 0;
 
+  // Shared by the meters below, which read up to 40 times a second.
+  const meterData = new Float32Array(4096); // autoGainMeter.fftSize
+
   function rmsDb(an) {
-    const data = new Float32Array(an.fftSize);
+    const data = meterData;
     an.getFloatTimeDomainData(data);
     let sum = 0;
     for (const v of data) sum += v * v;
@@ -603,7 +902,7 @@
 
   // RMS of the newest samples before the volume (muting or turning down isn't silence).
   function tailRmsDb(an, n = 512) {
-    const data = new Float32Array(an.fftSize);
+    const data = meterData;
     an.getFloatTimeDomainData(data);
     let sum = 0;
     for (let i = data.length - n; i < data.length; i++) sum += data[i] * data[i];
@@ -1111,6 +1410,7 @@
     const s = effective();
     applyPlayback(el, s);
     applyAudio(el, s);
+    if (tabFade !== 1 && !mixes.has(el) && nativeMix(el)) applyFade(el); // e.g. a new element
     applyVideo(el, s);
     applyAmbilight(el, s);
     applyVideoDelay(el, s);
@@ -1131,13 +1431,18 @@
     browser.runtime.sendMessage({ type: "badge", speed: settings.speed, enabled: settings.enabled }).catch(() => {});
   }
 
-  // Removed and paused elements are forgotten (SPAs create many over time).
-  // They come back through the observer or their own "play" listener.
+  // Removed and paused elements are forgotten (SPAs create many over time) and give back
+  // what we hold for them. They come back through the observer or their own "play" listener.
   function prune() {
     for (const el of media) {
       if (!el.isConnected && el.paused) {
         media.delete(el);
         loops.delete(el);
+        releaseChain(el);
+        ambilights.get(el)?.destroy();
+        ambilights.delete(el);
+        videoDelays.get(el)?.destroy();
+        videoDelays.delete(el);
       }
     }
   }
@@ -1233,6 +1538,12 @@
 
   window.addEventListener("pagehide", () => {
     for (const el of media) savePosition(el, true);
+    // A frame that goes away (or into the back/forward cache) hears no voice any more;
+    // its last report would keep B lowered. Restored, it reports anew.
+    if (voiceWatch && !retired) {
+      browser.runtime.sendMessage({ type: "voice-state", voice: false, analysed: false }).catch(() => {});
+      voiceReport = null;
+    }
   });
 
   // ---------- Reload and resume ----------
@@ -1285,24 +1596,203 @@
     if (++resume.seen >= 2) resume = null;
   }
 
+  // ---------- YouTube volume ----------
+
+  // YouTube plays loudly mixed videos below its slider: element.volume = slider × a factor
+  // per video. Switched on (options page), the element stays at the slider's value. The
+  // player doesn't look at the element's volume, so it neither resets this nor moves.
+  let ytHold = false;
+  const YT_RECHECK_MS = 100; // the player may update its slider just after the element
+
+  function ytSliderVolume(el) {
+    const value = el.closest(".html5-video-player")?.querySelector(".ytp-volume-panel")?.getAttribute("aria-valuenow");
+    const percent = value == null || value === "" ? NaN : Number(value);
+    return percent >= 0 && percent <= 100 ? percent / 100 : null;
+  }
+
+  function holdYtVolume(el) {
+    // muted: the slider shows 0, the volume comes back with it; the sleep timer and the
+    // mixer's element volume are changes the user asked for
+    if (!ytHold || retired || el.muted || sleep?.volumes.has(el) || mixes.get(el)?.native) return;
+    const volume = ytSliderVolume(el);
+    if (volume !== null && Math.abs(el.volume - volume) > 0.001) el.volume = volume;
+  }
+
+  function setYtHold(on) {
+    ytHold = on === true;
+    if (ytHold) for (const el of media) {
+      stopYtFade(el, true);
+      holdYtVolume(el);
+    }
+  }
+
+  // ---------- YouTube volume jumps ----------
+
+  // YouTube sets that factor sometimes only a second or two into the next video of a
+  // playlist, so the sound jumps by up to ~12 dB while it plays. Smoothing (on unless
+  // switched off in the options) takes such a change back at once and fades to the new
+  // volume. The user's own changes (the player's slider, keys, wheel) pass unchanged.
+  let ytSmooth = true;
+  const YT_FADE_UP_MS = 1500; // louder: slowly, that's the jump that hurts
+  const YT_FADE_DOWN_MS = 400;
+  const YT_FADE_STEP_MS = 25;
+  const YT_MIN_JUMP_DB = 1;
+  const YT_INPUT_MS = 800; // a volume change this soon after an input is the user's
+  const ytVolumes = new WeakMap(); // element -> { volume, slider, fade: { from, now, timer, own[] } | null }
+  let lastInput = -Infinity;
+  for (const type of ["pointerdown", "keydown", "wheel"]) {
+    window.addEventListener(type, () => (lastInput = performance.now()), { capture: true, passive: true });
+  }
+  window.addEventListener("pointermove", (e) => {
+    if (e.buttons) lastInput = performance.now(); // dragging the slider
+  }, { capture: true, passive: true });
+
+  function stopYtFade(el, finish) {
+    const st = ytVolumes.get(el);
+    if (!st?.fade) return;
+    clearTimeout(st.fade.timer);
+    st.fade = null;
+    if (finish) el.volume = st.volume;
+  }
+
+  function smoothYtVolume(el) {
+    const slider = ytSliderVolume(el);
+    const st = ytVolumes.get(el);
+    if (!st) {
+      ytVolumes.set(el, { volume: el.volume, slider, fade: null });
+      return;
+    }
+    // our own fade steps
+    const own = st.fade?.own.findIndex((v) => Math.abs(v - el.volume) < 1e-4) ?? -1;
+    if (own >= 0) {
+      st.fade.own.splice(0, own + 1);
+      return;
+    }
+    const heard = st.fade ? st.fade.now : st.volume;
+    const target = el.volume;
+    const sliderMoved = slider !== st.slider;
+    if (st.fade) console.info(`[Klangbild] fade ${st.fade.from.toFixed(3)} → ${st.volume.toFixed(3)} interrupted at ${heard.toFixed(3)}: volume set to ${target.toFixed(3)}${sliderMoved ? " (slider moved)" : ""}`);
+    stopYtFade(el, false);
+    st.volume = target;
+    st.slider = slider;
+    if (
+      !ytSmooth || ytHold || retired || slider === null || sliderMoved ||
+      el.paused || el.muted || sleep?.volumes.has(el) || mixes.get(el)?.native ||
+      performance.now() - lastInput < YT_INPUT_MS || !(heard > 0) || !(target > 0)
+    ) return;
+    const jumpDb = 20 * Math.log10(target / heard);
+    if (Math.abs(jumpDb) < YT_MIN_JUMP_DB) return;
+    // what the video's reported loudness gives: differs if YouTube goes by the audio format's
+    const factor = ytFactor(el);
+    const expected = factor === null ? "" : `, by the video's loudness ${(slider * factor).toFixed(3)}`;
+    console.info(`[Klangbild] YouTube changed the volume ${heard.toFixed(3)} → ${target.toFixed(3)} (${jumpDb > 0 ? "+" : ""}${jumpDb.toFixed(1)} dB${expected}) at ${el.currentTime.toFixed(1)} s – fading`);
+
+    const duration = jumpDb > 0 ? YT_FADE_UP_MS : YT_FADE_DOWN_MS;
+    const start = performance.now();
+    const fade = { from: heard, now: heard, timer: 0, own: [] };
+    st.fade = fade;
+    const set = (v) => {
+      fade.now = v;
+      fade.own.push(v);
+      el.volume = v;
+    };
+    const step = () => {
+      if (st.fade !== fade) return;
+      // the sleep timer or the mixer took over the element's volume
+      if (retired || sleep?.volumes.has(el) || mixes.get(el)?.native) {
+        st.fade = null;
+        return;
+      }
+      const f = Math.min(1, (performance.now() - start) / duration);
+      set(heard * (target / heard) ** f); // even steps in dB
+      if (f < 1) fade.timer = setTimeout(step, YT_FADE_STEP_MS);
+      else st.fade = null;
+    };
+    set(heard);
+    fade.timer = setTimeout(step, YT_FADE_STEP_MS);
+  }
+
+  // Often YouTube applies that factor late, after the start of a loud video has already
+  // played at the full slider volume. It reports each video's loudness up front, though
+  // (read by ytloudness.js in the page's world), so a video at its start is lowered to
+  // slider × factor right away – only ever lowered. Playing, smoothing fades it.
+  const YT_LOUDNESS_EVENT = "klangbild-yt-loudness";
+  const YT_LOUDNESS_ATTR = "data-klangbild-loudness";
+  const YT_PRESET_S = 5; // later on, changes are left to YouTube (and smoothing)
+  // If YouTube keeps raising it again, it is left to YouTube instead of a back and forth.
+  const YT_PRESET_MAX = 3;
+  const ytPresets = new WeakMap(); // element -> lowerings since the video's start
+
+  function ytFactor(el) {
+    // an ad plays at its own loudness, while the player still reports the video's
+    if (el.closest(".html5-video-player")?.classList.contains("ad-showing")) return null;
+    el.removeAttribute(YT_LOUDNESS_ATTR);
+    el.dispatchEvent(new Event(YT_LOUDNESS_EVENT, { bubbles: true })); // answered synchronously
+    const value = el.getAttribute(YT_LOUDNESS_ATTR);
+    el.removeAttribute(YT_LOUDNESS_ATTR);
+    const db = value === null || value === "" ? NaN : Number(value);
+    return Number.isFinite(db) ? Math.min(1, 10 ** (-db / 20)) : null;
+  }
+
+  function presetYtVolume(el) {
+    if (
+      !ytSmooth || ytHold || retired || el.muted || !(el.currentTime < YT_PRESET_S) ||
+      sleep?.volumes.has(el) || mixes.get(el)?.native
+    ) return;
+    const slider = ytSliderVolume(el);
+    const factor = slider === null ? null : ytFactor(el);
+    if (factor === null) return;
+    const target = slider * factor;
+    if (!(el.volume > target * 10 ** (YT_MIN_JUMP_DB / 20))) return;
+    const count = ytPresets.get(el) ?? 0;
+    if (count >= YT_PRESET_MAX) return;
+    ytPresets.set(el, count + 1);
+    if (count + 1 === YT_PRESET_MAX) console.info(`[Klangbild] YouTube keeps raising the volume – leaving it to YouTube for this video`);
+    console.info(`[Klangbild] YouTube reports this video ${(20 * Math.log10(factor)).toFixed(1)} dB – volume ${el.volume.toFixed(3)} → ${target.toFixed(3)} at ${el.currentTime.toFixed(1)} s`);
+    el.volume = target; // the volumechange that follows is smoothing's to fade (or not, paused)
+  }
+
+  function setYtSmooth(on) {
+    ytSmooth = on !== false;
+    if (!ytSmooth) for (const el of media) stopYtFade(el, true);
+  }
+
   function register(el) {
     if (retired || media.has(el)) return;
     media.add(el);
-    if (!chains.has(el) && !remote.has(el) && el.hasAttribute(ROUTED_ATTR)) {
+    if (!chains.has(el) && !sources.has(el) && !remote.has(el) && el.hasAttribute(ROUTED_ATTR)) {
       if (askOwner(el)) remote.add(el);
       else routedElsewhere.add(el);
     }
     if (!listened.has(el)) {
       listened.add(el);
       el.addEventListener("ratechange", onRateChange);
+      ytVolumes.set(el, { volume: el.volume, slider: ytSliderVolume(el), fade: null });
+      el.addEventListener("volumechange", () => {
+        presetYtVolume(el); // YouTube setting the full volume at a loud video's start
+        smoothYtVolume(el);
+        onNativeVolume(el);
+        holdYtVolume(el);
+        if (ytHold) setTimeout(() => holdYtVolume(el), YT_RECHECK_MS);
+      });
+      // the next video in the same element: lowered before its first sound if it's loud
+      el.addEventListener("loadstart", () => {
+        ytPresets.delete(el); // a new video: counted afresh
+        presetYtVolume(el);
+      });
       el.addEventListener("loadedmetadata", () => {
+        presetYtVolume(el);
         applyTo(el);
         applyResume(el);
         continueWatching(el);
       });
       el.addEventListener("durationchange", () => continueWatching(el));
       el.addEventListener("pause", () => savePosition(el, true));
-      el.addEventListener("playing", () => applyResume(el));
+      el.addEventListener("playing", () => {
+        presetYtVolume(el);
+        applyResume(el);
+        holdYtVolume(el); // the player's controls may not have been there before
+      });
       el.addEventListener("encrypted", () => {
         encrypted.add(el);
         applyVideoDelay(el, effective()); // drops a running delay overlay
@@ -1313,6 +1803,7 @@
         measureFrameRate(el);
       });
       el.addEventListener("timeupdate", () => {
+        if (el.currentTime < YT_PRESET_S) presetYtVolume(el); // the loudness may come a bit later
         checkLoop(el);
         savePosition(el);
       });
@@ -1354,8 +1845,16 @@
   }
 
   // Content scripts may open even closed shadow roots: Firefox via a property, Chrome via chrome.dom.
+  // Chrome's throws for anything but an HTMLElement (an SVG element, say) and on some
+  // pages of its own, such as the new tab page; only HTML elements carry shadow roots.
   function shadowRootOf(el) {
-    return "openOrClosedShadowRoot" in el ? el.openOrClosedShadowRoot : globalThis.chrome?.dom?.openOrClosedShadowRoot?.(el);
+    if ("openOrClosedShadowRoot" in el) return el.openOrClosedShadowRoot;
+    if (!(el instanceof HTMLElement)) return null;
+    try {
+      return globalThis.chrome?.dom?.openOrClosedShadowRoot?.(el) ?? null;
+    } catch {
+      return null;
+    }
   }
 
   // Also descends into shadow roots, where neither querySelectorAll nor the "play" listener reach.
@@ -1382,6 +1881,7 @@
     observe(document.documentElement);
     // Shadow roots attached after their host was inserted aren't reported by the observer.
     rescanTimer = setInterval(() => {
+      prune(); // otherwise removed elements stay until the panel is opened
       if (!document.hidden) scan(document);
     }, 3000);
   }
@@ -1391,12 +1891,17 @@
   // and overlays are removed.
   function retire() {
     retired = true;
+    tabFade = 1;
+    voiceWatch = false;
+    clearInterval(detectTimer);
+    detectTimer = 0;
     silenceTick(); // back to the normal speed
     setSleep(0);
     clearInterval(rescanTimer);
     observer.disconnect();
     loops.clear();
     for (const el of media) {
+      stopYtFade(el, true);
       const mix = mixes.get(el);
       if (mix?.native && mix.base !== undefined) el.volume = mix.base;
       mixes.delete(el);
@@ -1447,6 +1952,10 @@
         updateBadge();
       }
       continueOn = init?.resume === true;
+      setYtHold(init?.ytVolume);
+      setYtSmooth(init?.ytSmooth);
+      setFade(init?.fade);
+      setVoiceWatch(init?.voiceWatch);
       for (const el of media) if (el.readyState >= HTMLMediaElement.HAVE_METADATA) continueWatching(el);
     })
     .catch(() => {});
@@ -1454,7 +1963,11 @@
   // Switched in the options while the page is open.
   browser.storage.onChanged.addListener((changes, area) => {
     const prefs = changes[AVFX.PREFS_KEY];
-    if (area === "local" && prefs) continueOn = { ...AVFX.PREFS_DEFAULTS, ...prefs.newValue }.resume === true;
+    if (area !== "local" || !prefs) return;
+    const next = { ...AVFX.PREFS_DEFAULTS, ...prefs.newValue };
+    continueOn = next.resume === true;
+    setYtHold(next.ytVolume);
+    setYtSmooth(next.ytSmooth);
   });
 
   AVFX.onMessage((msg) => {
@@ -1483,6 +1996,16 @@
         return mediaList();
       case "media-mix":
         return mixMedia(msg);
+      case "voice-watch":
+        return ready.then(() => {
+          setVoiceWatch(msg.on);
+          return true;
+        });
+      case "media-fade":
+        return ready.then(() => {
+          setFade(msg.gain, msg.time);
+          return true;
+        });
       case "probe": {
         // Fallback for AVFX.findPrimaryFrame(): only frames with media answer.
         // Chrome has no getFrameId; the caller then broadcasts to all frames.

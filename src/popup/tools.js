@@ -1,27 +1,64 @@
-// A-B loop, repeat, frame stepping, seeking, sleep timer, screenshot, video info and
-// the keyboard shortcut overview.
+// Tool modules: transport (position, jump, frame stepping, play/pause, video info), A-B
+// loop and repeat, sleep timer, screenshot, and the keyboard shortcut overview.
+// They share one state poll of the primary media, which runs while any of them is shown.
 
 const SLEEP_MINUTES = [15, 30, 60, 90];
 
-function renderTools() {
+const toolViews = new Set(); // { node, show(state | null) }
+let toolPollStarted = false;
+let sleepChosen = null; // the page only knows the time left, so the chosen chip is kept here
+
+async function toolAction(action, extra = {}) {
+  const r = await sendToPrimary({ type: "action", action, ...extra });
+  for (const view of toolViews) {
+    if (view.node.isConnected) view.show(r?.state ?? null);
+  }
+  return r;
+}
+
+// Registers a node that shows the media state. Nodes that aren't on the page (a hidden
+// item, or replaced by a re-render of the layout) are dropped after a moment.
+function toolView(node, show) {
+  toolViews.add({ node, show, born: performance.now() });
+  if (toolPollStarted) return;
+  toolPollStarted = true;
+  const poll = async () => {
+    const now = performance.now();
+    for (const view of toolViews) if (!view.node.isConnected && now - view.born > 1000) toolViews.delete(view);
+    if (tabId !== null && [...toolViews].some((v) => isShown(v.node))) await toolAction("state");
+    setTimeout(poll, 400);
+  };
+  setTimeout(poll, 0);
+}
+
+// The answer to a tool button goes into its card's message line.
+function showToolMessage(button, r) {
+  const line = button.closest(".module")?.querySelector(".card-msg");
+  if (!line) return;
+  line.textContent = r?.text ?? (r ? "" : t("noMedia"));
+  line.classList.toggle("error", !r?.ok);
+  line.hidden = !line.textContent;
+}
+
+function toolButton(ic, label, action, extra) {
+  const b = el("button", { type: "button", className: "chip" }, icon(ic), label);
+  b.addEventListener("click", async () => showToolMessage(b, await toolAction(action, extra)));
+  return b;
+}
+
+function buildTransport() {
   const { formatTime } = AVFX;
   const position = el("div", { className: "tool-status", textContent: "–" });
+  const drmNote = el("div", { className: "notice", hidden: true, textContent: t("toolsDrmNote") });
   const info = el("div", { className: "hint", hidden: true });
-  const loopInfo = el("div", { className: "hint" });
-  const sleepInfo = el("div", { className: "hint" });
-  const sleepChips = new Map(); // minutes -> chip
-  const message = el("div", { className: "hint" });
-  const drmNote = el("div", {
-    className: "notice",
-    hidden: true,
-    textContent: t("toolsDrmNote"),
-  });
 
-  function showState(st) {
+  toolView(position, (st) => {
     drmNote.hidden = !st?.drm;
-    repeat.setAttribute("aria-pressed", String(Boolean(st?.loopAll)));
-    sleepInfo.textContent = st?.sleepLeft == null ? t("sleepInactive") : t("sleepLeft", formatTime(st.sleepLeft / 1000).replace(/\.\d$/, ""));
-    for (const [minutes, chip] of sleepChips) chip.setAttribute("aria-pressed", String(st?.sleepLeft != null && sleepChosen === minutes));
+    position.textContent = st
+      ? `${formatTime(st.time)} / ${formatTime(st.duration)} · ${t(st.paused ? "paused" : "playing")}`
+      : t("noMediaPlaying");
+  });
+  toolView(info, (st) => {
     const v = st?.video;
     info.hidden = !v;
     if (v) {
@@ -29,85 +66,74 @@ function renderTools() {
         (v.total === null ? t("videoSize", v.width, v.height) : t("videoInfo", v.width, v.height, v.dropped, v.total)) +
         (v.fps ? ` · ${t("videoFps", AVFX.formatNumber(v.fps, 3))}` : "");
     }
-    if (!st) {
-      position.textContent = t("noMediaPlaying");
-      loopInfo.textContent = "";
-      return;
-    }
-    position.textContent = `${formatTime(st.time)} / ${formatTime(st.duration)} · ${t(st.paused ? "paused" : "playing")}`;
-    if (st.loopA === null) loopInfo.textContent = t("noLoop");
-    else if (st.loopB === null) loopInfo.textContent = t("loopASet", formatTime(st.loopA));
-    else loopInfo.textContent = t("loopRepeating", formatTime(st.loopA), formatTime(st.loopB));
-  }
+  });
 
-  async function run(action, extra = {}) {
-    const r = await sendToPrimary({ type: "action", action, ...extra });
-    showState(r?.state);
-    if (action === "state") return;
-    message.textContent = r?.text ?? (r ? "" : t("noMedia"));
-    message.classList.toggle("error", !r?.ok);
-  }
-
-  const btn = (ic, label, action, extra) => {
-    const b = el("button", { type: "button", className: "chip" }, icon(ic), label);
-    b.addEventListener("click", () => run(action, extra));
+  // One row of equal buttons like the sidebar's timeline: the jumps show their seconds,
+  // the others only their icon, the name is the tooltip.
+  const compact = (ic, label, action, extra, text = "") => {
+    const b = toolButton(ic, text, action, extra);
+    b.title = label;
+    b.setAttribute("aria-label", label);
     return b;
   };
-
-  const repeat = btn("repeat", t("repeatAll"), "loop-all");
-
-  // The page only knows the time left, so the chosen chip is remembered here.
-  let sleepChosen = null;
-  for (const minutes of SLEEP_MINUTES) {
-    const chip = el("button", { type: "button", className: "chip", textContent: t("minutes", minutes) });
-    chip.addEventListener("click", () => {
-      sleepChosen = minutes;
-      run("sleep", { minutes });
-    });
-    sleepChips.set(minutes, chip);
-  }
-  const sleepOff = btn("reset", t("off"), "sleep", { minutes: 0 });
-
-  async function poll() {
-    if (activeSection === "extras" && tabId !== null && !document.hidden) await run("state");
-    setTimeout(poll, 400);
-  }
-  poll();
-
-  // In the sidebar the timeline above the tabs has the position and these buttons.
-  const transport = el(
+  const buttons = el(
     "div",
-    { className: "toggles" },
-    btn("seekBack", t("seekBack"), "seek", { seconds: -10 }),
-    btn("frameBack", t("frameBack"), "frame", { dir: -1 }),
-    btn("playPause", t("playPause"), "play"),
-    btn("frameFwd", t("frameFwd"), "frame", { dir: 1 }),
-    btn("seekFwd", t("seekForward"), "seek", { seconds: 10 })
+    { className: "toggles segmented transport" },
+    compact("seekBack", t("seekBack"), "seek", { seconds: -10 }, "−10"),
+    compact("frameBack", t("frameBack"), "frame", { dir: -1 }),
+    compact("playPause", t("playPause"), "play"),
+    compact("frameFwd", t("frameFwd"), "frame", { dir: 1 }),
+    compact("seekFwd", t("seekForward"), "seek", { seconds: 10 }, "+10")
   );
 
-  return [
-    drmNote,
-    ...(IN_SIDEBAR ? [info] : [position, info, transport]),
-    el("div", { className: "group-title" }, icon("loop"), t("abLoop")),
-    el(
-      "div",
-      { className: "toggles" },
-      btn("loop", t("setA"), "loop-a"),
-      btn("loop", t("setB"), "loop-b"),
-      btn("reset", t("off"), "loop-clear"),
-      repeat
-    ),
-    loopInfo,
-    el("div", { className: "group-title" }, icon("sleep"), t("sleepTimer")),
-    el("div", { className: "toggles" }, ...sleepChips.values(), sleepOff),
-    sleepInfo,
-    el("div", { className: "group-title" }, icon("camera"), t("screenshot")),
-    el("div", { className: "toggles" }, btn("camera", t("saveFrame"), "screenshot")),
-    message,
-  ];
+  return { position: () => [drmNote, position], buttons: () => [buttons], videoInfo: () => [info] };
 }
 
-function renderShortcuts() {
+function buildLoop() {
+  const { formatTime } = AVFX;
+  const loopInfo = el("div", { className: "hint" });
+  const repeat = toolButton("repeat", t("repeatAll"), "loop-all");
+  toolView(loopInfo, (st) => {
+    repeat.setAttribute("aria-pressed", String(Boolean(st?.loopAll)));
+    if (!st) loopInfo.textContent = "";
+    else if (st.loopA === null) loopInfo.textContent = t("noLoop");
+    else if (st.loopB === null) loopInfo.textContent = t("loopASet", formatTime(st.loopA));
+    else loopInfo.textContent = t("loopRepeating", formatTime(st.loopA), formatTime(st.loopB));
+  });
+  return {
+    setA: () => [toolButton("loop", t("setA"), "loop-a")],
+    setB: () => [toolButton("loop", t("setB"), "loop-b")],
+    loopOff: () => [toolButton("reset", t("off"), "loop-clear")],
+    repeat: () => [repeat],
+    loopInfo: () => [loopInfo],
+  };
+}
+
+function buildSleep() {
+  const sleepInfo = el("div", { className: "hint" });
+  const chips = new Map(); // minutes -> chip
+  for (const minutes of SLEEP_MINUTES) {
+    const chip = el("button", { type: "button", className: "chip", textContent: t("minutes", minutes) });
+    chip.addEventListener("click", async () => {
+      sleepChosen = minutes;
+      showToolMessage(chip, await toolAction("sleep", { minutes }));
+    });
+    chips.set(minutes, chip);
+  }
+  const row = el("div", { className: "toggles segmented", style: "--seg: 56px" }, ...chips.values(), toolButton("reset", t("off"), "sleep", { minutes: 0 }));
+  toolView(row, (st) => {
+    const left = st?.sleepLeft;
+    sleepInfo.textContent = left == null ? t("sleepInactive") : t("sleepLeft", AVFX.formatTime(left / 1000).replace(/\.\d$/, ""));
+    for (const [minutes, chip] of chips) chip.setAttribute("aria-pressed", String(left != null && sleepChosen === minutes));
+  });
+  return { sleepChips: () => [row], sleepInfo: () => [sleepInfo] };
+}
+
+function buildScreenshot() {
+  return { saveFrame: () => [toolButton("camera", t("saveFrame"), "screenshot")] };
+}
+
+function buildShortcuts() {
   const list = el("div", { className: "shortcut-list" });
   browser.commands.getAll().then((cmds) => {
     list.replaceChildren(
@@ -133,5 +159,5 @@ function renderShortcuts() {
   const shown = IN_SIDEBAR
     ? list
     : el("details", { className: "shortcut-details" }, el("summary", { textContent: t("showShortcuts") }), list);
-  return [shown, el("div", { className: "toggles" }, edit)];
+  return { list: () => [shown], edit: () => [edit] };
 }

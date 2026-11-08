@@ -1,35 +1,49 @@
 :root {
   color-scheme: dark;
-  --bg: #16171d;
-  --panel: #1f2029;
-  --border: #2e3040;
-  --text: #e8e9f0;
-  --muted: #8b8fa3;
-  --accent: #7c6cff;
-  --accent-soft: #7c6cff33;
-  --accent-light: #c3b9ff;
-  --danger: #ff6b7a;
-  --notice-border: #facc1555;
-  --notice-bg: #facc1514;
+  /* "Studio": graphite surfaces, teal for what is on, amber for what was changed. */
+  --bg: #0b0f14;
+  --panel: #141a21;
+  --panel-2: #1b222c;
+  --border: #253040;
+  --text: #e6edf3;
+  --muted: #8794a6;
+  --accent: #2dd4bf;
+  --accent-soft: #2dd4bf24;
+  --accent-light: #99f6e4;
+  --accent-deep: #0f766e;
+  --on-accent: #032925;
+  --amber: #fbbf24;
+  --amber-soft: #fbbf241f;
+  --danger: #f87171;
+  --notice-border: #fbbf2455;
+  --notice-bg: #fbbf2414;
   --notice-text: #fde68a;
+  --shadow: 0 1px 0 #ffffff08 inset, 0 6px 18px #0007;
+  --radius: 14px;
 }
 
 /* Follows the system's light/dark setting. */
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
-    --bg: #f6f6fa;
+    --bg: #eef2f6;
     --panel: #ffffff;
-    --border: #dcdde6;
-    --text: #1d1e26;
-    --muted: #63667a;
-    --accent: #6556f0;
-    --accent-soft: #6556f022;
-    --accent-light: #a99dff;
-    --danger: #d83a4c;
-    --notice-border: #d9a40066;
-    --notice-bg: #facc1522;
-    --notice-text: #7a5a00;
+    --panel-2: #f3f6f9;
+    --border: #d5dde7;
+    --text: #0f1720;
+    --muted: #5a6676;
+    --accent: #0d9488;
+    --accent-soft: #0d94881f;
+    --accent-light: #5eead4;
+    --accent-deep: #0f766e;
+    --on-accent: #ffffff;
+    --amber: #b45309;
+    --amber-soft: #b453091a;
+    --danger: #dc2626;
+    --notice-border: #d9770666;
+    --notice-bg: #fbbf2426;
+    --notice-text: #7c4a03;
+    --shadow: 0 1px 2px #0f17200f, 0 6px 16px #0f172012;
   }
 }
 
@@ -38,19 +52,20 @@
 }
 
 body {
-  width: 336px;
+  width: 360px;
   margin: 0;
-  padding: 8px;
+  padding: 10px 10px 0;
   background: var(--bg);
   color: var(--text);
-  font: 12.5px/1.35 system-ui, sans-serif;
+  font: 12.5px/1.4 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Firefox sidebar: fills the sidebar's width and has room to breathe. */
+/* Sidebar (Firefox) / side panel (Chrome): fills the sidebar's width and has room to breathe. */
 .sidebar body {
   width: auto;
   min-width: 0;
-  padding: 10px;
+  padding: 12px 12px 0;
   font-size: 13px;
   line-height: 1.4;
 }
@@ -64,18 +79,34 @@ header {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 15px;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
 }
 
+.brand img {
+  filter: hue-rotate(-95deg) saturate(1.1);
+}
+
+/* The status as a small pill under the header */
 .status {
-  margin: 4px 0 6px;
+  display: inline-block;
+  max-width: 100%;
+  margin: 8px 0 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11.5px;
+}
+
+.status:empty {
+  display: none;
 }
 
 .status.error {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
   color: var(--danger);
 }
 
@@ -92,38 +123,60 @@ body.bypassed main {
   opacity: 0.5;
 }
 
-/* Tabs */
+/* Pages: an app bar at the bottom that stays while the page scrolls (a rail on the left
+   in a wide sidebar, see below). */
 nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   display: flex;
-  gap: 4px;
-  padding: 3px;
-  background: var(--panel);
-  border-radius: 8px;
-  margin-bottom: 6px;
+  gap: 2px;
+  margin: 10px -10px 0;
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.sidebar nav {
+  margin: 12px -12px 0;
 }
 
 nav button {
   flex: 1;
-  padding: 6px 4px;
+  min-width: 0;
+  padding: 2px 1px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 10px;
   background: transparent;
   color: var(--muted);
   font: inherit;
   cursor: pointer;
 }
 
-nav button[aria-selected="true"] {
-  background: var(--accent);
-  color: #fff;
+/* The icon sits in a pill that fills when its page is shown. */
+nav button .icon {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s;
 }
 
+nav button[aria-selected="true"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+nav button[aria-selected="true"] .icon {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* A page: a column of module cards (layout.js) */
 .panel {
   display: none;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
 }
 
 .panel.active {
@@ -279,13 +332,21 @@ input[type="range"] {
   transform: translateX(16px);
 }
 
-/* Footer */
-footer {
+/* Site bar under the header: remember for this site, reset all. */
+.site-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 6px;
+  margin-bottom: 10px;
+  padding: 5px 5px 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.site-bar[hidden] {
+  display: none;
 }
 
 .check {
@@ -297,7 +358,16 @@ footer {
   min-width: 0;
 }
 
+/* "Remember for <host>" on one line: only the host shortens. white-space: pre keeps
+   the spaces around it, which flex would otherwise drop. */
+#rememberFor {
+  display: flex;
+  min-width: 0;
+  white-space: pre;
+}
+
 .check b {
+  min-width: 0;
   color: var(--text);
   font-weight: 500;
   overflow: hidden;
@@ -311,10 +381,10 @@ footer {
 
 #resetAll {
   flex-shrink: 0;
-  padding: 5px 10px;
+  padding: 4px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--panel);
+  border-radius: 999px;
+  background: var(--panel-2);
   color: var(--text);
   font: inherit;
   font-size: 12px;
@@ -352,19 +422,64 @@ nav button {
   justify-content: center;
 }
 
+/* A heading is a line of its own, even right after another one. */
+.group-title {
+  display: flex;
+}
+
 .group-title .icon {
   width: 12px;
   height: 12px;
 }
 
+/* Changed from the default: amber, like a lit button on a desk. */
 .row.changed > .label .icon {
-  color: var(--accent);
+  color: var(--amber);
 }
 
-/* Four tabs need a bit less room */
+/* Icon above the name, so six pages fit even with long names ("Wiedergabe") */
 nav button {
-  font-size: 12px;
-  gap: 4px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 2px 1px;
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+
+nav button span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+nav button:hover:not([aria-selected="true"]) {
+  color: var(--text);
+}
+
+/* Quick values (speeds, angles, sleep timer, transport): equal segments in one row,
+   wrapping only when the panel is too narrow. --seg is the smallest segment. */
+.toggles.segmented {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--seg, 36px), 1fr));
+}
+
+.toggles.segmented .chip {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.toggles.transport {
+  --seg: 44px;
+}
+
+.toggles.transport .chip {
+  gap: 3px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 .hint.error {
@@ -570,7 +685,7 @@ kbd {
 }
 
 nav[hidden],
-footer[hidden],
+.site-bar[hidden],
 .switch[hidden],
 .notice[hidden],
 .hint[hidden],
@@ -605,8 +720,8 @@ footer[hidden],
   height: 88px;
 }
 
-.sidebar .panel {
-  padding: 10px 12px;
+.sidebar .module-body {
+  padding: 2px 12px 10px;
 }
 
 .row.stepped {
@@ -746,8 +861,9 @@ footer[hidden],
   min-width: 0;
 }
 
-/* Narrow sidebar: tabs show only their icons (the name is the tooltip). */
-@media (max-width: 380px) {
+/* Narrow sidebar: seven tabs show only their icons (the name is the tooltip); the
+   names need about 60 px each ("Wiedergabe"). */
+@media (max-width: 470px) {
   .sidebar nav button span {
     display: none;
   }
@@ -755,12 +871,18 @@ footer[hidden],
   .sidebar nav button .icon {
     width: 16px;
     height: 16px;
+    padding: 4px 6px;
   }
 }
 
 /* Very narrow sidebar: the slider gets its own line, − value + below it; jump buttons
    show only their signed seconds; the footer wraps. */
 @media (max-width: 280px) {
+  /* Seven icons side by side */
+  nav {
+    gap: 2px;
+  }
+
   .row.stepped {
     grid-template-columns: 22px 1fr 22px;
     grid-template-areas: "label label label" "range range range" "minus num plus";
@@ -803,8 +925,9 @@ footer[hidden],
     gap: 2px;
   }
 
-  footer {
+  .site-bar {
     flex-wrap: wrap;
+    border-radius: 12px;
   }
 
   .mixer-controls {
@@ -1022,7 +1145,7 @@ input.fx-range {
      hovered or grabbed one lights up. */
   --ring-in: var(--accent-light);
   --ring-mid: var(--accent);
-  --ring-out: #4a3fa3;
+  --ring-out: var(--accent-deep);
   --board: radial-gradient(circle closest-side, var(--ring-in) 0 40%, var(--panel) 40% 44%, var(--ring-mid) 44% 70%,
     var(--panel) 70% 74%, var(--ring-out) 74%);
 }
@@ -1095,7 +1218,7 @@ input.fx-range[data-ring="outer"] {
   padding: 2px 6px;
   border-radius: 6px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1114,3 +1237,970 @@ input.fx-range[data-ring="outer"] {
   transform: translateX(-50%);
 }
 
+
+/* Crossfader (mixer) */
+.crossfade {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.crossfade-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crossfade-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.crossfade-pick,
+.crossfade-slider,
+.crossfade-duck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.crossfade-slider input[type="range"],
+.crossfade-duck input[type="range"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.crossfade-duck > span:first-child {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Inside a card the crossfader is narrower: its rows wrap instead of overflowing. */
+.crossfade-duck {
+  flex-wrap: wrap;
+}
+
+.crossfade-duck[hidden] {
+  display: none;
+}
+
+.crossfade-letter {
+  flex-shrink: 0;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.crossfade-letter[hidden] {
+  display: none;
+}
+
+.crossfade-levels {
+  text-align: center;
+}
+
+button.crossfade-letter {
+  border: 1px solid transparent;
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+button.crossfade-letter:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button.crossfade-letter[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
+button.crossfade-letter:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.crossfade-head .chip .icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: -2px;
+  margin-right: 3px;
+}
+
+/* Detection (mixer) */
+.mixer-options {
+  margin-top: 6px;
+}
+
+.mixer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 11px;
+}
+
+.mixer-badge[data-kind="sound"] {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.mixer-badge .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.mixer-badge[hidden],
+.mixer-dup[hidden] {
+  display: none;
+}
+
+.mixer-dup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.mixer-dup > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.mixer-dup > .icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.mixer-options .chip .icon,
+.crossfade-duck .chip .icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: -2px;
+  margin-right: 3px;
+}
+
+
+/* ---------- Layout: pages and module cards (layout.js) ---------- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-actions .card-btn[hidden] {
+  display: none;
+}
+
+#editLayout.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Many pages: the tab bar scrolls sideways instead of squeezing the names away. */
+nav {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+nav button[role="tab"] {
+  min-width: 44px;
+}
+
+/* Icons only (narrow sidebar): they can be narrower before the bar scrolls. */
+@media (max-width: 470px) {
+  .sidebar nav button[role="tab"] {
+    min-width: 20px;
+  }
+}
+
+.nav-add {
+  flex: 0 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.nav-add:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+nav button.drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  color: var(--text);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A wide sidebar shows the cards side by side. */
+@media (min-width: 600px) {
+  .sidebar .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    align-items: start;
+  }
+}
+
+.module {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.module-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px 3px 6px;
+}
+
+.module-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.module-title > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.module-title > .icon:first-child {
+  color: var(--accent-light);
+}
+
+.module-title .chevron {
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.module.collapsed .module-title .chevron {
+  transform: rotate(-90deg);
+}
+
+.module-body {
+  padding: 0 10px 8px;
+}
+
+.module.collapsed .module-body {
+  display: none;
+}
+
+.module-body > .card-msg[hidden] {
+  display: none;
+}
+
+/* Items are just their content, except while editing. */
+.mod-item {
+  display: contents;
+}
+
+.mod-row {
+  margin: 4px 0 2px;
+}
+
+.mod-item.block + .mod-item.block > .group-title:first-child {
+  margin-top: 8px;
+}
+
+.card-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.card-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.card-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.card-btn.pin[aria-pressed="true"] {
+  color: #facc15;
+}
+
+.card-btn.danger:hover:not(:disabled) {
+  background: none;
+  color: var(--danger);
+}
+
+.module-title:focus-visible,
+.card-btn:focus-visible,
+.nav-add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.page-empty {
+  padding: 18px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ---------- Editing the layout ---------- */
+
+.editing .module {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.grip {
+  cursor: grab;
+  touch-action: none;
+}
+
+.dragging {
+  position: relative;
+  z-index: 3;
+  opacity: 0.75;
+  outline: 2px solid var(--accent);
+  box-shadow: 0 8px 24px #0006;
+}
+
+.dragging .grip {
+  cursor: grabbing;
+}
+
+.editing .mod-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  border-radius: 6px;
+}
+
+.editing .mod-item + .mod-item {
+  border-top: 1px dashed var(--border);
+}
+
+.editing .mod-item.dragging {
+  background: var(--panel);
+}
+
+.item-tools {
+  display: flex;
+}
+
+.item-tools .card-btn {
+  width: 24px;
+  height: 24px;
+}
+
+.mod-item-content {
+  min-width: 0;
+}
+
+.mod-item.off .mod-item-content {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.mod-item.off .item-tools .card-btn:last-child {
+  color: var(--danger);
+}
+
+.move-select {
+  max-width: 96px;
+  padding: 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.page-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.page-tools .toggles {
+  margin: 0;
+}
+
+.page-name-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.page-name-row input {
+  flex: 1;
+  min-width: 0;
+  margin-right: 4px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.add-module {
+  margin-top: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.add-module summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  color: var(--accent-light);
+  cursor: pointer;
+  list-style: none;
+}
+
+.add-module summary::-webkit-details-marker {
+  display: none;
+}
+
+.add-module[open] summary {
+  border-bottom: 1px dashed var(--border);
+}
+
+.add-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  padding: 4px;
+  overflow-y: auto;
+}
+
+.add-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.add-item span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-item small {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.add-item:hover {
+  background: var(--accent-soft);
+}
+
+.editing .module-title {
+  cursor: default;
+}
+
+.editing .module-title .chevron {
+  display: none;
+}
+
+/* ---------- Studio look: cards, chips, knobs, faders, tiles ---------- */
+
+.module {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.module-head {
+  padding: 5px 5px 3px 8px;
+}
+
+.module-title {
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.module-title > .icon:first-child {
+  box-sizing: content-box;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.module-body {
+  padding: 0 12px 10px;
+}
+
+.card-btn.pin[aria-pressed="true"] {
+  color: var(--amber);
+}
+
+.chip {
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.chip[aria-pressed="true"] .icon {
+  color: var(--accent);
+}
+
+.row > .label .reset {
+  color: var(--amber);
+}
+
+.num input,
+.spectrum,
+.mixer-tab,
+.crossfade,
+.preset-apply,
+.icon-btn,
+.preset-save input {
+  background: var(--panel-2);
+}
+
+.timeline {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 10px;
+}
+
+.check input,
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+/* The view picked for a card in edit mode */
+.view-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 8px;
+}
+
+/* Grids of knobs, faders or tiles */
+.dial-grid {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
+.dial-grid.knobs {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+}
+
+.dial-grid.faders {
+  grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+}
+
+.dial-grid.tiles {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/* Fader names are long ("Bass (200 Hz)"): two short lines instead of cut off */
+.fader .dial-label {
+  align-items: flex-start;
+  min-height: 2.4em;
+}
+
+.fader .dial-label .icon {
+  display: none;
+}
+
+.fader .dial-label span {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px 6px;
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.dial-ctrl {
+  position: relative;
+  outline: none;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.dial-ctrl:focus-visible {
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.dial-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.dial-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dial-label .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.dial.changed .dial-label {
+  color: var(--text);
+}
+
+.dial.changed .dial-label .icon {
+  color: var(--amber);
+}
+
+.dial-value {
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.dial-value:hover {
+  background: var(--accent-soft);
+}
+
+.dial-value input {
+  width: 64px;
+  padding: 1px 4px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+}
+
+.dial.disabled {
+  opacity: 0.45;
+}
+
+.dial.disabled .dial-ctrl {
+  cursor: default;
+}
+
+/* Knob: an arc from the lowest to the highest value, filled from 0 (or the lowest) */
+.knob .dial-ctrl {
+  width: 64px;
+  height: 64px;
+}
+
+.knob svg {
+  display: block;
+  width: 64px;
+  height: 64px;
+}
+
+.knob .dial-track,
+.knob .dial-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.knob .dial-track {
+  stroke: var(--border);
+}
+
+.knob .dial-fill {
+  stroke: var(--accent);
+}
+
+.knob.changed .dial-fill {
+  stroke: var(--amber);
+}
+
+.knob .dial-pointer {
+  fill: var(--text);
+  stroke: var(--panel-2);
+  stroke-width: 2;
+}
+
+.knob .dial-value {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11.5px;
+}
+
+.knob.active .dial-fill {
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+/* Fader: a vertical track with a cap, as on a mixing desk */
+.fader .dial-ctrl {
+  display: flex;
+  justify-content: center;
+  width: 44px;
+  height: 120px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.fader .dial-track {
+  position: relative;
+  width: 6px;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.fader .dial-fill {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.fader.changed .dial-fill {
+  background: var(--amber);
+}
+
+.fader .dial-zero {
+  position: absolute;
+  left: -8px;
+  width: 22px;
+  height: 1px;
+  background: var(--muted);
+}
+
+.fader .dial-zero[hidden] {
+  display: none;
+}
+
+.fader .dial-thumb {
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: linear-gradient(var(--panel), var(--panel-2));
+  box-shadow: 0 2px 6px #0006, inset 0 -1px 0 #0003;
+  transform: translate(-50%, 50%);
+}
+
+.fader .dial-thumb::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--text);
+}
+
+.fader.active .dial-thumb {
+  border-color: var(--accent);
+}
+
+.fader .dial-value {
+  font-size: 11px;
+}
+
+/* Tile: the value big, the bar behind it, dragged sideways */
+.tile {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tile .dial-ctrl {
+  width: 100%;
+  min-height: 58px;
+  border-radius: 12px;
+  cursor: ew-resize;
+}
+
+.tile .dial-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--accent-soft);
+  border-right: 2px solid var(--accent);
+}
+
+.tile.changed .dial-fill {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+}
+
+.tile-text,
+.dial-tile-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+}
+
+.tile .dial-label {
+  justify-content: flex-start;
+}
+
+.tile .dial-value {
+  padding: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Wide sidebar: the pages as a rail on the left ---------- */
+
+@media (min-width: 600px) {
+  .sidebar body {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    grid-auto-flow: row dense;
+    column-gap: 12px;
+    align-items: start;
+  }
+
+  .sidebar body > * {
+    grid-column: 1 / -1;
+  }
+
+  .sidebar body > .status {
+    justify-self: start;
+  }
+
+  .sidebar nav#tabs {
+    grid-column: 1;
+    position: sticky;
+    top: 12px;
+    bottom: auto;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 6px 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    overflow: visible;
+  }
+
+  .sidebar nav#tabs button[role="tab"] {
+    flex: 0 0 auto;
+    padding: 4px 2px;
+  }
+
+  .sidebar nav#tabs .nav-add {
+    flex: 0 0 32px;
+  }
+
+  .sidebar main#panels {
+    grid-column: 2;
+    padding-bottom: 12px;
+  }
+}

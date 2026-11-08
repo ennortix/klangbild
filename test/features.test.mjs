@@ -2,7 +2,8 @@
 // background script's storage and tab handling.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadBackground, loadCommon, makeStorage, plain } from "./helpers.mjs";
+import vm from "node:vm";
+import { loadBackground, loadCommon, makeStorage, plain, read } from "./helpers.mjs";
 
 const AVFX = loadCommon().AVFX;
 
@@ -248,4 +249,17 @@ test("continue watching: parallel saves all arrive, the oldest go beyond the lim
   } finally {
     ctx.AVFX.RESUME.maxEntries = max;
   }
+});
+
+// ---------- Picture delay ----------
+
+test("picture delay: the buffered frames stay within the memory budget", () => {
+  const ctx = loadCommon();
+  vm.runInContext(read("videodelay.js"), ctx);
+  const VD = ctx.AVFXVideoDelay;
+  assert.deepEqual(plain(VD.captureSize(640, 360, 30)), { width: 640, height: 360 }, "small: full size");
+  const big = VD.captureSize(3840, 2160, 62); // 4K, 60 fps, 1 s
+  assert.ok(big.width * big.height * 4 * 62 <= VD.BUDGET * 1.01);
+  assert.ok(Math.abs(big.width / big.height - 16 / 9) < 0.01, "keeps the aspect ratio");
+  assert.deepEqual(plain(VD.captureSize(1, 1, 0)), { width: 1, height: 1 });
 });

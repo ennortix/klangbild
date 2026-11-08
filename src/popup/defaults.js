@@ -1,7 +1,7 @@
 // "Default for all sites" (storage.local AVFX.DEFAULTS_KEY): what sites without
 // their own remembered settings start with. Also opens the options page.
 
-function renderDefaults() {
+function buildDefaults() {
   const status = el("div", { className: "hint" });
   const use = el("button", { type: "button", className: "chip" }, icon("save"), t("useAsDefault"));
   const clear = el("button", { type: "button", className: "chip" }, icon("trash"), t("removeDefault"));
@@ -25,5 +25,5 @@ function renderDefaults() {
 
   browser.storage.local.get(AVFX.DEFAULTS_KEY).then((r) => show(Boolean(r[AVFX.DEFAULTS_KEY])));
 
-  return [status, el("div", { className: "toggles" }, use, clear, manage)];
+  return { status: () => [status], use: () => [use], remove: () => [clear], manage: () => [manage] };
 }

@@ -92,8 +92,27 @@ function pausesWav() {
   return wavOf(fn, fn, { seconds: 21 });
 }
 
+// Voice-like, the same in both channels: a 150 Hz voice with its overtones weighted to the
+// speech band, in syllables (4 a second) of random loudness, about every fifth a pause.
+function syllablesWav() {
+  const harmonics = [1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20].map((k) => [150 * k, k * 150 < 250 ? 0.2 : k * 150 > 3500 ? 0.15 : 1]);
+  let seed = 11;
+  const loudness = Array.from({ length: 100 }, () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const fn = (i, rate) => {
+    const t = i / rate;
+    const n = loudness[Math.floor(t * 4) % loudness.length];
+    if (n < 0.2) return 0;
+    const syllable = Math.max(0, Math.sin(2 * Math.PI * 4 * t)) * n;
+    let v = 0;
+    for (const [hz, weight] of harmonics) v += weight * Math.sin(2 * Math.PI * hz * t);
+    return 0.06 * syllable * v;
+  };
+  return wavOf(fn, fn, { seconds: 15 });
+}
+
 const FILES = {
   "/left.wav": ["audio/wav", wav({ left: 0.5, right: 0 })],
+  "/syllables.wav": ["audio/wav", syllablesWav()],
   "/pauses.wav": ["audio/wav", pausesWav()],
   // long enough for "continue watching" (2 minutes and more), small at 8 kHz
   "/long.wav": ["audio/wav", wav({ left: 0.05, right: 0.05, seconds: 150, rate: 8000 })],
@@ -286,6 +305,44 @@ for (const [file, direction] of [["/quiet.wav", 1], ["/loud.wav", -1]]) {
     }));
 }
 
+test("a removed element gets a new chain and its sound back when it returns", { skip }, () =>
+  withMedia("audio", "/left.wav", async ({ tab, send }) => {
+    await set(send, { swap: true });
+    assert.ok((await levelDb(send)) > -40, "signal before");
+    await tab.evaluate(() => {
+      const m = document.getElementById("m");
+      m.pause();
+      globalThis.kept = m;
+      m.remove();
+    });
+    await waitFor(async () => (await send({ type: "get" })).mediaCount === 0, 8000); // pruned, chain released
+    await tab.evaluate(async () => {
+      document.body.append(kept);
+      await kept.play();
+    });
+    await set(send, {}); // back to neutral: the element is routed for good, it needs its chain anyway
+    await waitFor(async () => (await send({ type: "get" })).mediaCount === 1);
+    assert.ok((await levelDb(send)) > -40, "signal after");
+  }));
+
+test("the picture delay draws frames and removes its overlay with the element", { skip }, () =>
+  withMedia("video", "/video-24fps.webm", async ({ tab, send }) => {
+    await set(send, { audioDelay: -300 }, 1500);
+    const drawn = await tab.evaluate(() => {
+      const c = document.querySelector("canvas");
+      const { data } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+      return data.some((v, i) => i % 4 === 3 && v !== 0);
+    });
+    assert.ok(drawn, "canvas shows a frame");
+    await tab.evaluate(() => {
+      const m = document.getElementById("m");
+      m.pause();
+      m.remove();
+    });
+    await waitFor(async () => (await send({ type: "get" })).mediaCount === 0, 8000);
+    assert.equal(await tab.evaluate(() => document.querySelectorAll("canvas").length), 0);
+  }));
+
 for (const fps of [24, 50]) {
   test(`frame step uses the measured frame rate (${fps} fps)`, { skip }, () =>
     withMedia("video", `/video-${fps}fps.webm`, async ({ tab, send }) => {
@@ -369,13 +426,23 @@ test("a disabled site is left alone and says so", { skip }, async () => {
     await withMedia(
       "video",
       "/video-24fps.webm",
-      async ({ tab, send, tabId }) => {
+      async ({ tab, send, tabId, url }) => {
         const state = await send({ type: "get" });
         assert.equal(state.disabled, true);
         // the mixer learns why it can't offer anything here
         assert.deepEqual(await mediaListOf(tabId), { disabled: true });
         await send({ type: "set", settings: { brightness: 50 } }).catch(() => {}); // nobody answers
         assert.equal(await mediaProp(tab, "m.style.filter"), "");
+        // the sidebar keeps the mixer here, with the switch to enable the site again
+        const panel = await openPanel(tabId, url, { sidebar: true });
+        try {
+          const sections = await panel.$$eval("nav button", (b) => b.map((x) => x.dataset.section));
+          assert.deepEqual(sections, ["mixer", "customize"]);
+          assert.ok(await panel.$eval('.panel[data-section="mixer"]', (n) => n.classList.contains("active")));
+          assert.ok(await panel.$eval(".crossfade", (n) => n.isConnected));
+        } finally {
+          await panel.close();
+        }
       },
       { playing: false }
     );
@@ -399,14 +466,26 @@ async function openPanel(tabId, url, { sidebar }) {
     url
   );
   await panel.goto(`chrome-extension://${extId}/popup/popup.html${sidebar ? "?sidebar" : ""}`);
-  await panel.waitForFunction(() => document.querySelector(".row") && !document.getElementById("status").textContent.includes("…"));
+  await panel.waitForFunction(() => document.querySelector(".row, .crossfade") && !document.getElementById("status").textContent.includes("…"));
   return panel;
 }
 
-const showSection = (panel, index) => panel.evaluate((i) => document.querySelectorAll("nav button")[i].click(), index);
+// Shows a page of the panel by its id (layout.js): start, playback, audio, … customize.
+const showSection = (panel, id) => panel.evaluate((id) => document.querySelector(`nav button[data-section="${id}"]`).click(), id);
 
 const rowProp = (panel, key, expr) =>
-  panel.evaluate((key, expr) => new Function("row", `return ${expr}`)(document.querySelector(`.row[data-key="${key}"]`)), key, expr);
+  panel.evaluate(
+    // A slider can be on two pages (pinned to Start): the one on the shown page counts.
+    (key, expr) => new Function("row", `return ${expr}`)(document.querySelector(`.page.active .row[data-key="${key}"]`) ?? document.querySelector(`.row[data-key="${key}"]`)),
+    key,
+    expr
+  );
+
+test("sidebar: Chrome offers the panel page as its side panel", { skip }, async () => {
+  const options = await worker.evaluate(() => chrome.sidePanel.getOptions({}));
+  assert.equal(options.path, "popup/popup.html?sidebar");
+  assert.notEqual(options.enabled, false);
+});
 
 test("sidebar: the timeline shows the media and its buttons seek", { skip }, () =>
   withMedia("video", "/video-24fps.webm", async ({ tab, tabId, url }) => {
@@ -449,12 +528,12 @@ test("sidebar: extended limits, − / + and own slider steps", { skip }, () =>
     try {
       assert.equal(await rowProp(panel, "volume", 'row.querySelector("input[type=range]").max'), "800");
       assert.equal(await rowProp(panel, "speed", 'row.querySelector("input[type=range]").max'), "16");
-      await showSection(panel, 1); // Audio
-      await panel.click('.row[data-key="volume"] .stepper:last-of-type');
+      await showSection(panel, "audio");
+      await panel.click('.page.active .row[data-key="volume"] .stepper:last-of-type');
       await waitFor(async () => (await send({ type: "get" })).settings.volume === 101);
 
-      // Customize tab: volume step 10
-      await showSection(panel, 5); // Customize
+      // Customize page: volume step 10
+      await showSection(panel, "customize");
       const stepInput = await panel.evaluateHandle(() =>
         [...document.querySelectorAll(".setting-row")].find((r) => r.querySelector("input").placeholder === "1" && r.textContent.match(/Volume|Lautstärke/)).querySelector("input")
       );
@@ -463,15 +542,15 @@ test("sidebar: extended limits, − / + and own slider steps", { skip }, () =>
         i.dispatchEvent(new Event("change"));
       });
       assert.equal(await rowProp(panel, "volume", 'row.querySelector("input[type=range]").step'), "10");
-      await showSection(panel, 1);
-      await panel.click('.row[data-key="volume"] .stepper:last-of-type');
+      await showSection(panel, "audio");
+      await panel.click('.page.active .row[data-key="volume"] .stepper:last-of-type');
       await waitFor(async () => (await send({ type: "get" })).settings.volume === 110);
-      await panel.click('.row[data-key="volume"] .stepper:first-of-type');
+      await panel.click('.page.active .row[data-key="volume"] .stepper:first-of-type');
       await waitFor(async () => (await send({ type: "get" })).settings.volume === 100);
 
       // Extended limits off: back to the everyday range
-      await showSection(panel, 5);
-      await panel.evaluate(() => document.querySelector('.panel.active .chip[aria-pressed="true"]').click());
+      await showSection(panel, "customize");
+      await panel.evaluate(() => document.querySelector('.panel.active .module-body .chip[aria-pressed="true"]').click());
       assert.equal(await rowProp(panel, "volume", 'row.querySelector("input[type=range]").max'), "400");
       const stored = await worker.evaluate(() => chrome.storage.local.get("sidebarUi"));
       assert.deepEqual(stored.sidebarUi, { extended: false, steps: { volume: 10 }, jumpShort: 5, jumpLong: 30 });
@@ -488,7 +567,12 @@ test("popup: compact, no timeline and the everyday ranges", { skip }, () =>
       assert.equal(await panel.$eval("#timeline", (t) => t.hidden), true);
       assert.equal(await panel.$(".stepper"), null);
       assert.equal(await rowProp(panel, "volume", 'row.querySelector("input[type=range]").max'), "400");
-      assert.equal(await panel.$$eval("nav button", (b) => b.length), 4, "no Customize tab");
+      const sections = await panel.$$eval("nav button", (b) => b.map((x) => x.dataset.section));
+      assert.deepEqual(sections, ["start", "playback", "audio", "video", "presets", "extras"], "no Mixer or Customize page");
+      const modulesOn = (id) => panel.$$eval(`.page[data-section="${id}"] .module`, (m) => m.map((x) => x.dataset.module));
+      assert.ok((await modulesOn("presets")).includes("presets"), "presets on their own page");
+      assert.ok(!(await modulesOn("extras")).includes("presets"), "not in Extras any more");
+      assert.ok((await modulesOn("start")).includes("speed"), "Start shows the pinned modules");
       assert.ok(await rowProp(panel, "audioDelay", 'row.querySelector(".name").title.length > 20'), "hint as tooltip");
       assert.equal(await rowProp(panel, "audioDelay", 'row.querySelector(".hint")'), null);
     } finally {
@@ -525,7 +609,7 @@ test("mixer: lists the media, its own volume and mute change the level", { skip 
   withMedia("audio", "/left.wav", async ({ send, tabId, url }) => {
     const panel = await openPanel(tabId, url, { sidebar: true });
     try {
-      await showSection(panel, 4); // Mixer
+      await showSection(panel, "mixer");
       await panel.waitForSelector(".mixer-item");
       assert.equal(await panel.$eval(".mixer-name", (n) => n.textContent), "left.wav");
       assert.equal(await panel.$eval(".mixer-tab", (n) => n.classList.contains("current")), true);
@@ -578,6 +662,91 @@ test("mixer: media from another origin without CORS is mixed through its own vol
     assert.equal((await mediaListOf(tabId))[0].gain, 100);
   }));
 
+test("crossfader: the tab's factor lowers its media on top of their own mix", { skip }, () =>
+  withMedia("audio", "/left.wav", async ({ send, tabId }) => {
+    await set(send, { swap: true }); // so the level can be compared before and after
+    const full = await levelDb(send);
+    assert.equal(await send({ type: "media-fade", gain: 0.5, time: 0 }), true);
+    await pause(400);
+    const half = await levelDb(send);
+    assert.ok(Math.abs(full - half - 6.02) < 0.7, `fade 50 %: ${(full - half).toFixed(2)} dB`);
+    assert.equal((await mediaListOf(tabId))[0].gain, 100, "the element's own mix is untouched");
+    await send({ type: "media-mix", id: (await mediaListOf(tabId))[0].id, gain: 50 });
+    await pause(400);
+    assert.ok(Math.abs(full - (await levelDb(send)) - 12.04) < 0.7, "both factors multiply");
+    await send({ type: "media-fade", gain: 1, time: 0 });
+    await pause(400);
+    assert.ok(Math.abs(full - (await levelDb(send)) - 6.02) < 0.7, "back to the mix alone");
+  }));
+
+test("crossfader: media from another origin is faded through its own volume", { skip }, () =>
+  withMedia("audio", origin.replace("127.0.0.1", "localhost") + "/left.wav", async ({ tab, send, tabId }) => {
+    await send({ type: "media-fade", gain: 0.25, time: 0 });
+    assert.equal(await mediaProp(tab, "m.volume"), 0.25);
+    assert.equal((await mediaListOf(tabId))[0].hasAudioChain, false, "not routed through Web Audio");
+    // the page moves its own slider: the fade stays on top of the new volume
+    await mediaProp(tab, "(m.volume = 0.8, true)");
+    await waitFor(async () => Math.abs((await mediaProp(tab, "m.volume")) - 0.2) < 1e-6, 2000);
+    await send({ type: "media-fade", gain: 1, time: 0 });
+    assert.equal(await mediaProp(tab, "m.volume"), 0.8, "the page's volume is restored");
+  }));
+
+// The mixer's detection: what the frame reports with detect = true.
+const detectedOf = (tabId) =>
+  worker.evaluate(
+    (id) =>
+      chrome.scripting
+        .executeScript({ target: { tabId: id }, func: () => globalThis.__avfxMediaList?.(true) ?? null })
+        .then((r) => r[0].result[0]),
+    tabId
+  );
+
+test("detection: a voice-like signal is marked as voice, a steady tone only as sound", { skip }, async () => {
+  await withMedia("audio", "/syllables.wav", async ({ tabId }) => {
+    await waitFor(async () => (await detectedOf(tabId)).voice === true, 8000).catch(async () =>
+      assert.fail(`no voice: ${JSON.stringify((await detectedOf(tabId)).features)}`)
+    );
+    const item = await detectedOf(tabId);
+    assert.equal(item.analysable, true);
+    assert.ok(item.levels.values.some((v) => v !== null), "a level history for duplicates");
+  });
+  await withMedia("audio", "/loud.wav", async ({ tabId }) => {
+    await waitFor(async () => (await detectedOf(tabId)).sound === true, 8000);
+    for (let i = 0; i < 6; i++) {
+      assert.equal((await detectedOf(tabId)).voice, false, JSON.stringify((await detectedOf(tabId)).features));
+      await pause(400);
+    }
+  });
+});
+
+test("detection: the same audio in two tabs matches at its offset, different audio doesn't", { skip }, () =>
+  withMedia("audio", "/syllables.wav", async ({ tabId: first }) => {
+    await pause(700);
+    await withMedia("audio", "/syllables.wav", async ({ tabId: second }) =>
+      withMedia("audio", "/pauses.wav", async ({ tabId: other }) => {
+        // asked like the mixer does, so detection runs, until there is enough history
+        let a, b, c;
+        for (let i = 0; i < 20; i++) {
+          [a, b, c] = [await detectedOf(first), await detectedOf(second), await detectedOf(other)];
+          await pause(500);
+        }
+        const match = (x, y) =>
+          worker.evaluate((x, y) => {
+            const { VOICE, DUPLICATE } = AVFX;
+            const f = (ms) => Math.round(ms / VOICE.frameMs);
+            const smooth = (l) => AVFX.smoothLevels(l, VOICE.floor);
+            return AVFX.envelopeMatch(smooth(x), smooth(y), f(DUPLICATE.maxLagMs), f(DUPLICATE.minOverlapMs), DUPLICATE.minStd);
+          }, x.levels, y.levels);
+        const same = await match(a, b);
+        assert.ok(same.corr >= 0.93, `copy: ${same.corr}`);
+        const started = Math.round((a.time - b.time) * 1000); // a is asked a moment before b
+        assert.ok(Math.abs(same.lag * 20 - started) < 150, `offset ${same.lag * 20} ms, positions say ${started} ms`);
+        const different = await match(a, c);
+        assert.ok(!different || different.corr < 0.93, `different: ${different?.corr}`);
+      })
+    );
+  }));
+
 test("sidebar: the timeline says so on a tab without access", { skip }, async () => {
   const panel = await openPanel(999999, "about:blank", { sidebar: true });
   try {
@@ -585,6 +754,13 @@ test("sidebar: the timeline says so on a tab without access", { skip }, async ()
     const text = await panel.$eval(".tl-time", (n) => n.textContent);
     assert.equal(text, await panel.evaluate(() => chrome.i18n.getMessage("notAvailable")));
     assert.equal(await panel.$$eval(".tl-btn", (b) => b.every((x) => x.disabled)), true);
+    // the mixer looks at all tabs: it stays usable
+    const usable = (section) =>
+      panel.evaluate((s) => [...document.querySelectorAll(`.panel[data-section="${s}"] :is(input, button)`)].filter((n) => n.disabled).length, section);
+    const off = await panel.evaluate(() => [...document.querySelectorAll('.panel[data-section="mixer"] :is(input, button)')].filter((n) => n.disabled).map((n) => n.className + "|" + n.textContent + "|" + n.title).join(" ;; "));
+    assert.equal(await usable("mixer") <= 3, true, "only the crossfader's A / B / A ⇄ B buttons wait for chosen tabs: " + off);
+    assert.equal(await usable("customize"), 0);
+    assert.ok(await panel.$eval('.panel[data-section="audio"] input', (n) => n.disabled), "tab controls are off");
   } finally {
     await panel.close();
   }
@@ -599,7 +775,7 @@ test("panel: the host marker survives Chrome's i18n (U+0000 didn't)", { skip }, 
       assert.equal(await panel.evaluate("AVFX.t('rememberFor', HOST_MARKER).includes(HOST_MARKER)"), true);
       assert.equal(await panel.$eval("#rememberFor b", (b) => b.textContent), "127.0.0.1");
       // the analyzer's empty state fits its box in the compact popup
-      await showSection(panel, 1);
+      await showSection(panel, "audio");
       await panel.waitForFunction(() => !document.querySelector(".spectrum-empty").hidden);
       const fits = await panel.$eval(".spectrum-empty", (o) => o.scrollHeight <= o.clientHeight + 1);
       assert.equal(fits, true, "empty state fits the spectrum box");
@@ -613,13 +789,13 @@ test("sidebar: a 200 px wide sidebar has no overlapping controls", { skip }, () 
     const panel = await openPanel(tabId, url, { sidebar: true });
     try {
       await panel.setViewport({ width: 200, height: 800 });
-      await showSection(panel, 0);
+      await showSection(panel, "start");
       await pause(300);
       const r = await panel.evaluate(() => {
         const box = (n) => n.getBoundingClientRect();
         const overlap = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
         const buttons = [...document.querySelectorAll(".tl-btn")].map(box);
-        const footer = [document.querySelector("footer .check"), document.getElementById("resetAll")].map(box);
+        const footer = [document.querySelector("#siteBar .check"), document.getElementById("resetAll")].map(box);
         const speed = document.querySelector('.row[data-key="speed"]');
         return {
           scroll: document.documentElement.scrollWidth,
@@ -784,6 +960,175 @@ test("rules: a matching address gets the rule's speed, also when a page changes 
   }
 });
 
+test("YouTube volume: held at the player's slider when switched on, left alone otherwise", { skip }, () =>
+  withMedia("video", "/video-24fps.webm", async ({ tab }) => {
+    const volumeIs = (v) => tab.waitForFunction((v) => document.getElementById("m").volume === v, { timeout: 3000 }, v);
+    const pause = () => new Promise((r) => setTimeout(r, 300));
+    // the smoothing of YouTube's own volume jumps is tested below
+    const prefs = (ytVolume) => worker.evaluate((ytVolume) => chrome.storage.local.set({ prefs: { resume: true, knob: false, ytVolume, ytSmooth: false } }), ytVolume);
+    await tab.evaluate(() => {
+      const player = Object.assign(document.createElement("div"), { className: "html5-video-player" });
+      const slider = Object.assign(document.createElement("div"), { className: "ytp-volume-panel" });
+      slider.setAttribute("aria-valuenow", "100");
+      player.append(document.getElementById("m"), slider);
+      document.body.append(player);
+      document.getElementById("m").volume = 0.42;
+    });
+    try {
+      await pause();
+      assert.equal(await mediaProp(tab, "m.volume"), 0.42, "off by default");
+
+      await prefs(true);
+      await volumeIs(1);
+
+      // The player's own change, with its slider following just after the element.
+      await tab.evaluate(() => {
+        document.getElementById("m").volume = 0.38;
+        setTimeout(() => document.querySelector(".ytp-volume-panel").setAttribute("aria-valuenow", "90"), 20);
+      });
+      await volumeIs(0.9);
+
+      // Muted: the element is left alone, on unmuting it goes back to the slider.
+      await tab.evaluate(() => {
+        const m = document.getElementById("m");
+        m.muted = true;
+        m.volume = 0.1;
+      });
+      await pause();
+      assert.equal(await mediaProp(tab, "m.volume"), 0.1, "left alone while muted");
+      await tab.evaluate(() => (document.getElementById("m").muted = false));
+      await volumeIs(0.9);
+
+      await prefs(false);
+      await pause();
+      await tab.evaluate(() => (document.getElementById("m").volume = 0.42));
+      await pause();
+      assert.equal(await mediaProp(tab, "m.volume"), 0.42, "switched off again");
+    } finally {
+      await worker.evaluate(() => chrome.storage.local.remove("prefs"));
+    }
+  }));
+
+test("YouTube volume: the player's own jumps are faded, the user's changes pass at once", { skip }, () =>
+  withMedia("video", "/video-24fps.webm", async ({ tab }) => {
+    const volume = () => mediaProp(tab, "m.volume");
+    const volumeIs = (v) => tab.waitForFunction((v) => Math.abs(document.getElementById("m").volume - v) < 1e-6, { timeout: 3000 }, v);
+    await tab.evaluate(async () => {
+      const m = document.getElementById("m");
+      const player = Object.assign(document.createElement("div"), { className: "html5-video-player" });
+      const slider = Object.assign(document.createElement("div"), { className: "ytp-volume-panel" });
+      slider.setAttribute("aria-valuenow", "100");
+      player.append(m, slider);
+      document.body.append(player);
+      m.muted = true; // autoplay without a user gesture
+      m.loop = true;
+      await m.play();
+      m.muted = false;
+    });
+    await new Promise((r) => setTimeout(r, 200));
+    assert.equal(await mediaProp(tab, "m.paused"), false);
+
+    // YouTube lowers a loudly mixed video (slider unchanged): faded down
+    await tab.evaluate(() => (document.getElementById("m").volume = 0.25));
+    await new Promise((r) => setTimeout(r, 60));
+    assert.ok((await volume()) > 0.5, `taken back at first: ${await volume()}`);
+    await volumeIs(0.25);
+
+    // ... and back up a few seconds into the next video: faded up over 1.5 s
+    await tab.evaluate(() => (document.getElementById("m").volume = 1));
+    await new Promise((r) => setTimeout(r, 700));
+    const mid = await volume();
+    assert.ok(mid > 0.3 && mid < 0.9, `half-way up: ${mid}`);
+    await volumeIs(1);
+
+    // The user moves the player's slider: at once.
+    await tab.evaluate(() => {
+      document.querySelector(".ytp-volume-panel").setAttribute("aria-valuenow", "50");
+      document.getElementById("m").volume = 0.5;
+    });
+    await new Promise((r) => setTimeout(r, 60));
+    assert.equal(await volume(), 0.5);
+  }));
+
+test("YouTube volume: a loud video is lowered at its start, from the loudness YouTube reports", { skip }, () =>
+  withMedia("video", "/video-24fps.webm", async ({ tab }) => {
+    const volume = () => mediaProp(tab, "m.volume");
+    const near = (v) => tab.waitForFunction((v) => Math.abs(document.getElementById("m").volume - v) < 1e-3, { timeout: 3000 }, v);
+    await tab.evaluate(() => {
+      const m = document.getElementById("m");
+      m.pause();
+      m.currentTime = 0;
+      m.volume = 0.5;
+      const player = Object.assign(document.createElement("div"), { className: "html5-video-player" });
+      const slider = Object.assign(document.createElement("div"), { className: "ytp-volume-panel" });
+      slider.setAttribute("aria-valuenow", "50");
+      player.append(m, slider);
+      document.body.append(player);
+      // what ytloudness.js answers on YouTube
+      window.loudnessDb = null;
+      document.addEventListener("klangbild-yt-loudness", (e) => {
+        if (window.loudnessDb === null) e.target.removeAttribute("data-klangbild-loudness");
+        else e.target.setAttribute("data-klangbild-loudness", String(window.loudnessDb));
+      }, true);
+    });
+    await new Promise((r) => setTimeout(r, 300));
+
+    // nothing reported: left alone
+    await tab.evaluate(() => (document.getElementById("m").volume = 0.49));
+    await new Promise((r) => setTimeout(r, 200));
+    assert.equal(await volume(), 0.49);
+
+    // a quiet video (YouTube never raises above the slider): left alone
+    await tab.evaluate(() => {
+      window.loudnessDb = -6;
+      document.getElementById("m").volume = 0.5;
+    });
+    await new Promise((r) => setTimeout(r, 200));
+    assert.equal(await volume(), 0.5);
+
+    // +10.5 dB, during an ad: left alone, the ad has its own loudness
+    await tab.evaluate(() => {
+      window.loudnessDb = 10.5;
+      document.querySelector(".html5-video-player").classList.add("ad-showing");
+      document.getElementById("m").volume = 0.49;
+    });
+    await new Promise((r) => setTimeout(r, 200));
+    assert.equal(await volume(), 0.49);
+
+    // the video itself: lowered to slider × 10^(-10.5/20) before it plays
+    await tab.evaluate(() => {
+      document.querySelector(".html5-video-player").classList.remove("ad-showing");
+      document.getElementById("m").load();
+    });
+    await near(0.5 * 10 ** (-10.5 / 20));
+
+    // YouTube setting the full slider volume at the start: kept down, twice more
+    for (let i = 0; i < 2; i++) {
+      await tab.evaluate(() => (document.getElementById("m").volume = 0.5));
+      await new Promise((r) => setTimeout(r, 100));
+      assert.ok(Math.abs((await volume()) - 0.5 * 10 ** (-10.5 / 20)) < 1e-3, `kept down: ${await volume()}`);
+    }
+    // ... but if it keeps doing so, no back and forth: left to YouTube
+    await tab.evaluate(() => (document.getElementById("m").volume = 0.5));
+    await near(0.5); // faded there if playing
+    // the next video counts afresh
+    await tab.evaluate(() => document.getElementById("m").load());
+    await near(0.5 * 10 ** (-10.5 / 20));
+
+    // switched off: no longer
+    await worker.evaluate(() => chrome.storage.local.set({ prefs: { ytSmooth: false } }));
+    try {
+      await new Promise((r) => setTimeout(r, 300));
+      await tab.evaluate(() => document.getElementById("m").load());
+      await new Promise((r) => setTimeout(r, 200));
+      await tab.evaluate(() => (document.getElementById("m").volume = 0.5));
+      await new Promise((r) => setTimeout(r, 100));
+      assert.equal(await volume(), 0.5);
+    } finally {
+      await worker.evaluate(() => chrome.storage.local.remove("prefs"));
+    }
+  }));
+
 test("ambilight: a glow around the picture, the picture itself untouched", { skip }, () =>
   withMedia(
     "video",
@@ -839,11 +1184,7 @@ test("panel sliders: double-click resets, the wheel steps, a bubble shows the va
     const panel = await openPanel(tabId, url, { sidebar: false });
     try {
       await panel.waitForFunction(() => document.documentElement.classList.contains("knob-mode"));
-      // Show the section holding the volume slider.
-      for (let i = 0; i < 6; i++) {
-        await showSection(panel, i);
-        if (await rowProp(panel, "volume", "row.offsetParent !== null")) break;
-      }
+      await showSection(panel, "audio");
       const volume = () => rowProp(panel, "volume", "Number(row.querySelector('input[type=range]').value)");
       const bubble = () => rowProp(panel, "volume", "(b => b.hidden ? null : b.textContent)(row.querySelector('.slider-bubble'))");
       const box = await rowProp(panel, "volume", "(r => { const b = r.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; })(row.querySelector('input[type=range]'))");
@@ -934,8 +1275,8 @@ test("panel sliders: double-click resets, the wheel steps, a bubble shows the va
       await panel.mouse.click(box.x + 15 + 0.75 * (box.w - 30), cy);
       assert.ok(Math.abs((await volume()) - 300) <= 2, `track click: ${await volume()}`);
 
-      // Drag mode (the options page's switch): pulled along the track the thumb drags,
-      // pulled up and circled on its outer ring it still turns +10 per notch.
+      // Drag mode (the options page's switch): pulled along the track the thumb drags, it
+      // never turns.
       await worker.evaluate(() => chrome.storage.local.set({ prefs: { resume: true, knob: false } }));
       await panel.waitForFunction(() => !document.documentElement.classList.contains("knob-mode"));
       const v0 = await volume();
@@ -961,12 +1302,17 @@ test("panel sliders: double-click resets, the wheel steps, a bubble shows the va
         const t1 = await thumb();
         await panel.mouse.move(t1.x, t1.y - 13);
         await panel.mouse.down();
-        for (let d = 0; d <= 92; d += 4) {
+        // straight up and down: a press that didn't go along the track changes nothing
+        await panel.mouse.move(t1.x, t1.y - 40, { steps: 6 });
+        await panel.mouse.move(t1.x, t1.y - 13, { steps: 6 });
+        assert.equal(await volume(), t1.v, "pulled up and down in drag mode");
+        // a whole circle on the outer ring: the thumb follows and ends where it began
+        for (let d = 0; d <= 360; d += 6) {
           const a = (d * Math.PI) / 180;
           await panel.mouse.move(t1.x + 13 * Math.sin(a), t1.y - 13 * Math.cos(a));
         }
         await panel.mouse.up();
-        assert.equal(await volume(), t1.v + 50, "outer ring turns in drag mode");
+        assert.equal(await volume(), t1.v, "circling doesn't turn in drag mode");
       }
     } finally {
       await panel.close();

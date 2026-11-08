@@ -1,4 +1,4 @@
-// Extras of the Firefox sidebar (IN_SIDEBAR): a timeline with jump buttons for the
+// Extras of the sidebar / side panel (IN_SIDEBAR): a timeline with jump buttons for the
 // tab's primary media, sliders reaching AVFX.LIMITS ("extended limits") and custom
 // slider steps. The popup keeps the everyday ranges and steps.
 
@@ -190,7 +190,7 @@ function renderTimeline() {
   ];
 }
 
-// ---------- Customize tab ----------
+// ---------- Customize page ----------
 
 function numberInput(value, { min, max, placeholder = "" }, onChange) {
   const input = el("input", { type: "number", min, max, step: "any", value: value ?? "", placeholder });
@@ -211,62 +211,53 @@ function settingRow(iconName, label, input, unit) {
   );
 }
 
-function renderCustomize() {
+// The Customize page's modules: extended limits, jump widths of the timeline and the
+// step size of every slider.
+function buildLimits() {
   const extended = el("button", { type: "button", className: "chip" }, icon("speed"), t("extendedLimits"));
   extended.addEventListener("click", () => saveUi({ extended: !ui.extended }));
   updaters.push(() => extended.setAttribute("aria-pressed", String(ui.extended)));
+  const L = AVFX.LIMITS;
+  const n = (v) => AVFX.formatNumber(v, 2);
+  const hint = el("div", {
+    className: "hint",
+    textContent: t("extendedLimitsHint", `${n(L.speed[0])}–${n(L.speed[1])}`, n(L.volume[1]), n(L.bass[1]), n(L.audioDelay[1])),
+  });
+  return { extended: () => [extended], hint: () => [hint] };
+}
 
+function buildJumps() {
   const jumpRow = (key, label) => {
     const input = numberInput(ui[key], { min: JUMP_RANGE[0], max: JUMP_RANGE[1] }, (v) => {
       saveUi({ [key]: v ?? UI_DEFAULTS[key] });
       input.value = ui[key];
     });
-    return settingRow("seekFwd", label, input, "s");
+    return [el("div", { className: "setting-list" }, settingRow("seekFwd", label, input, "s"))];
   };
+  return { jumpShort: () => jumpRow("jumpShort", t("jumpShort")), jumpLong: () => jumpRow("jumpLong", t("jumpLong")) };
+}
 
+function buildSteps() {
   const stepInputs = [];
-  const stepRows = [];
-  for (const section of SECTIONS) {
-    for (const g of section.groups) {
-      for (const c of g.controls ?? []) {
-        const input = numberInput(ui.steps[c.key], { min: MIN_STEP, max: (AVFX.LIMITS[c.key][1] - AVFX.LIMITS[c.key][0]) / 2, placeholder: AVFX.formatNumber(c.step, 3) }, (v) => {
-          const steps = { ...ui.steps };
-          if (v === null || v === c.step) delete steps[c.key];
-          else steps[c.key] = v;
-          saveUi({ steps });
-          input.value = ui.steps[c.key] ?? "";
-        });
-        stepInputs.push(input);
-        stepRows.push(settingRow(c.icon, c.label, input, c.unit));
-      }
-    }
-  }
+  const stepRows = CONTROLS.map((c) => {
+    const input = numberInput(ui.steps[c.key], { min: MIN_STEP, max: (AVFX.LIMITS[c.key][1] - AVFX.LIMITS[c.key][0]) / 2, placeholder: AVFX.formatNumber(c.step, 3) }, (v) => {
+      const steps = { ...ui.steps };
+      if (v === null || v === c.step) delete steps[c.key];
+      else steps[c.key] = v;
+      saveUi({ steps });
+      input.value = ui.steps[c.key] ?? "";
+    });
+    stepInputs.push(input);
+    return settingRow(c.icon, c.label, input, c.unit);
+  });
   const resetSteps = el("button", { type: "button", className: "chip" }, icon("reset"), t("resetSteps"));
   resetSteps.addEventListener("click", () => {
     saveUi({ steps: {} });
     for (const i of stepInputs) i.value = "";
   });
-
-  const L = AVFX.LIMITS;
-  const n = (v) => AVFX.formatNumber(v, 2);
-  return [
-    el("div", { className: "group-title" }, icon("speed"), t("limitsTitle")),
-    el("div", { className: "toggles" }, extended),
-    el("div", {
-      className: "hint",
-      textContent: t(
-        "extendedLimitsHint",
-        `${n(L.speed[0])}–${n(L.speed[1])}`,
-        n(L.volume[1]),
-        n(L.bass[1]),
-        n(L.audioDelay[1])
-      ),
-    }),
-    el("div", { className: "group-title" }, icon("seekFwd"), t("jumpWidths")),
-    el("div", { className: "setting-list" }, jumpRow("jumpShort", t("jumpShort")), jumpRow("jumpLong", t("jumpLong"))),
-    el("div", { className: "group-title" }, icon("tune"), t("sliderSteps")),
-    el("div", { className: "hint", textContent: t("sliderStepsHint") }),
-    el("div", { className: "setting-list" }, ...stepRows),
-    el("div", { className: "toggles" }, resetSteps),
-  ];
+  return {
+    hint: () => [el("div", { className: "hint", textContent: t("sliderStepsHint") })],
+    list: () => [el("div", { className: "setting-list" }, ...stepRows)],
+    reset: () => [resetSteps],
+  };
 }

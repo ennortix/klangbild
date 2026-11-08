@@ -2,7 +2,7 @@
 
 let userPresets = []; // [{ name, settings }]
 
-function renderPresets() {
+function buildPresets() {
   const builtins = el(
     "div",
     { className: "toggles" },
@@ -54,14 +54,17 @@ function renderPresets() {
   });
 
   browser.storage.local.get("presets").then((r) => {
-    userPresets = r.presets ?? [];
+    // hand-edited or damaged storage: skip what isn't a preset
+    userPresets = (Array.isArray(r.presets) ? r.presets : []).filter((p) => typeof p?.name === "string");
     renderList();
   });
 
-  return [
-    builtins,
-    el("div", { className: "group-title" }, icon("save"), t("customPresets")),
-    list,
-    el("div", { className: "preset-save" }, name, save),
-  ];
+  return {
+    builtin: () => [builtins],
+    custom: () => [
+      el("div", { className: "group-title" }, icon("save"), t("customPresets")),
+      list,
+      el("div", { className: "preset-save" }, name, save),
+    ],
+  };
 }

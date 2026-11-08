@@ -1,6 +1,6 @@
 // Spectrum bars and level meter. createSpectrumView() is shared with the analyzer
 // window; renderSpectrum() feeds it from the primary media element of the tab and
-// only polls while the audio tab is visible.
+// only polls while its card is shown (layout.js isShown).
 
 const METER_FLOOR_DB = -60;
 
@@ -104,13 +104,14 @@ function renderSpectrum() {
     view.draw(live ? data : null);
   }
 
+  // Stops when the layout is re-rendered and this view is gone.
+  const box = view.nodes[0];
   async function poll() {
-    if (activeSection === "audio" && tabId !== null && !document.hidden) {
-      draw(await sendToPrimary({ type: "spectrum" }));
-    }
+    if (!box.isConnected) return;
+    if (tabId !== null && isShown(box)) draw(await sendToPrimary({ type: "spectrum" }));
     setTimeout(poll, 50);
   }
-  poll();
+  setTimeout(poll, 0);
 
   return view.nodes;
 }

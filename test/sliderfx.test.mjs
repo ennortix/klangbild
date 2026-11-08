@@ -29,19 +29,6 @@ test("thumb rings: steps per notch – inner 1, middle 5, outer 10", () => {
   assert.deepEqual({ ...load()("RING_STEPS") }, { inner: 1, middle: 5, outer: 10 });
 });
 
-test("press mode (drag mode): leaving the track's line turns, going along it drags", () => {
-  const mode = load()("pressMode");
-  assert.equal(mode(10, 2), null, "not decided yet");
-  assert.equal(mode(16, 3), "drag");
-  assert.equal(mode(-16, -5), "drag");
-  assert.equal(mode(2, -7), "turn");
-  // circling right on the outer ring (radius 13 px) from its top: turns before 15 px sideways
-  const at = (deg) => [13 * Math.sin((deg * Math.PI) / 180), 13 - 13 * Math.cos((deg * Math.PI) / 180)];
-  let decided = null;
-  for (let d = 0; d <= 90 && !decided; d += 4) decided = mode(...at(d));
-  assert.equal(decided, "turn");
-});
-
 test("snapTo: dragging by the middle or outer ring moves on a 5 or 10 times coarser grid", () => {
   const snap = load()("snapTo");
   const volume = { min: 0, max: 400, step: 1, anchor: 100 };
@@ -61,6 +48,15 @@ test("stepBy: on the grid through the default, within the bounds", () => {
   assert.equal(stepBy(3.9, 10, speed), 4);
   assert.equal(stepBy(0.3, -10, speed), 0.25);
   assert.equal(stepBy(1.02, 1, speed), 1.05, "snaps back onto the grid");
+});
+
+test("stepToward: like stepBy, but a value beyond the bounds isn't pulled back", () => {
+  const stepToward = load()("stepToward");
+  const speed = { min: 0.25, max: 4, step: 0.05, anchor: 1 };
+  assert.equal(stepToward(1, 3, speed), 1.15);
+  assert.equal(stepToward(8, 1, speed), 8, "up from 8× (extended limits off) stays");
+  assert.equal(stepToward(8, -1, speed), 4, "down goes into the range");
+  assert.equal(stepToward(0.1, -1, speed), 0.1);
 });
 
 test("formatValue: signed for sliders below zero, with the unit (German UI in the tests)", () => {

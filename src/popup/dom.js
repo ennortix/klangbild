@@ -4,8 +4,8 @@ const $ = (id) => document.getElementById(id);
 
 const t = AVFX.t;
 
-// The popup page also runs as a Firefox sidebar panel (sidebar_action, popup.html?sidebar),
-// which has room for more: see sidebar.js.
+// The popup page also runs as the sidebar (popup.html?sidebar: Firefox's sidebar_action,
+// Chrome's side panel), which has room for more: see sidebar.js.
 const IN_SIDEBAR = new URLSearchParams(location.search).has("sidebar");
 if (IN_SIDEBAR) document.documentElement.classList.add("sidebar");
 

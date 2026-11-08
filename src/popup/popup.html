@@ -11,26 +11,29 @@
         <img src="../icons/icon.svg" alt="" width="20" height="20" />
         <span>Klangbild</span>
       </div>
-      <label class="switch" data-i18n-title="toggleAllTitle">
-        <input type="checkbox" id="enabled" />
-        <span class="track"></span>
-      </label>
+      <div class="header-actions">
+        <button id="editLayout" class="card-btn" type="button"></button>
+        <label class="switch" data-i18n-title="toggleAllTitle">
+          <input type="checkbox" id="enabled" />
+          <span class="track"></span>
+        </label>
+      </div>
     </header>
 
     <p id="status" class="status" data-i18n="connecting"></p>
     <button id="reloadResume" class="status-action" type="button" hidden data-i18n="reloadResume" data-i18n-title="reloadResumeHint"></button>
 
-    <section id="timeline" class="timeline" hidden></section>
-    <nav id="tabs" role="tablist"></nav>
-    <main id="panels"></main>
-
-    <footer>
-      <label class="check">
+    <div id="siteBar" class="site-bar">
+      <label class="check site-save">
         <input type="checkbox" id="siteSave" />
         <span id="rememberFor"></span>
       </label>
       <button id="resetAll" type="button"><span data-i18n="resetAll"></span></button>
-    </footer>
+    </div>
+
+    <section id="timeline" class="timeline" hidden></section>
+    <main id="panels"></main>
+    <nav id="tabs" role="tablist"></nav>
 
     <script src="../common.js"></script>
     <script src="dom.js"></script>
@@ -42,6 +45,9 @@
     <script src="sidebar.js"></script>
     <script src="sliderfx.js"></script>
     <script src="mixer.js"></script>
+    <script src="dial.js"></script>
+    <script src="modules.js"></script>
+    <script src="layout.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

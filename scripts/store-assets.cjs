@@ -17,6 +17,8 @@ const MOCK = String.raw`
   const q = new URLSearchParams(location.search);
   const settings = JSON.parse(q.get("s") || "{}");
   try { localStorage.setItem("lastTab", q.get("tab") || "audio"); } catch {}
+  const MESSAGES = __MESSAGES__;
+  const listener = () => ({ addListener() {}, removeListener() {} });
   const url = "https://video.example.com/watch?v=demo";
   const bands = Array.from({ length: 48 }, (_, i) =>
     Math.max(0.05, Math.min(1, 0.92 - i * 0.011 + 0.12 * Math.sin(i * 0.55) + 0.08 * Math.sin(i * 1.7))));
@@ -30,10 +32,17 @@ const MOCK = String.raw`
     }
   };
   const api = {
-    runtime: { id: "demo", getURL: (p) => "/" + p, onMessage: { addListener() {} }, sendMessage: async () => undefined },
-    tabs: { query: async () => [{ id: 1, url }], sendMessage: async (_t, msg) => reply(msg), create: async () => ({}) },
+    i18n: {
+      getUILanguage: () => "en",
+      getMessage: (k, subs = []) => (MESSAGES[k]?.message ?? "").replace(/\$(\d)/g, (_, n) => [].concat(subs)[n - 1] ?? ""),
+    },
+    runtime: { id: "demo", getURL: (p) => "/" + p, onMessage: listener(), sendMessage: async () => undefined, openOptionsPage() {} },
+    tabs: {
+      query: async () => [{ id: 1, url }], get: async () => ({ id: 1, url }), sendMessage: async (_t, msg) => reply(msg),
+      create: async () => ({}), update: async () => {}, reload: async () => {}, onActivated: listener(), onUpdated: listener(),
+    },
     scripting: { executeScript: async () => [{ frameId: 0, result: { score: 1, kind: "video", hasAudioChain: true, drm: false } }] },
-    storage: { local: {
+    storage: { onChanged: listener(), local: {
       get: async (k) => (k === "presets"
         ? { presets: [{ name: "Late-night series", settings: {} }, { name: "Podcast voice", settings: {} }] }
         : { [k]: settings }),
@@ -47,7 +56,7 @@ const MOCK = String.raw`
       { name: "speed-up", description: "Faster (+0.25×)", shortcut: "Alt+Shift+Up" },
       { name: "loop", description: "A-B loop: set A → set B → off", shortcut: "Alt+Shift+L" },
     ] },
-    windows: { create: async () => ({}) },
+    windows: { create: async () => ({}), getCurrent: async () => ({ id: 1 }), update: async () => {} },
   };
   Object.defineProperty(window, "chrome", { value: api, configurable: true, writable: true });
 })();
@@ -106,8 +115,8 @@ const SHOTS = [
   {
     file: "screenshot-4-extras.png", tab: "extras", frame: 640,
     settings: { bass: 4, treble: 3, contrast: 115, saturate: 115 },
-    title: "Presets, loops and frame stepping",
-    text: "One-click presets, an A-B loop, frame-by-frame stepping, screenshots and keyboard shortcuts.",
+    title: "Loops, frame stepping and shortcuts",
+    text: "An A-B loop, frame-by-frame stepping, a sleep timer, screenshots and keyboard shortcuts.",
   },
 ];
 
@@ -145,7 +154,10 @@ function serve(pages) {
   return http
     .createServer((req, res) => {
       const url = new URL(req.url, "http://x");
-      if (url.pathname === "/mock.js") return res.writeHead(200, { "Content-Type": TYPES[".js"] }).end(MOCK);
+      if (url.pathname === "/mock.js") {
+        const messages = fs.readFileSync(path.join(ROOT, "src", "_locales", "en", "messages.json"), "utf8");
+        return res.writeHead(200, { "Content-Type": TYPES[".js"] }).end(MOCK.replace("__MESSAGES__", messages));
+      }
       if (pages[url.pathname]) return res.writeHead(200, { "Content-Type": TYPES[".html"] }).end(pages[url.pathname]);
       const file = path.join(ROOT, decodeURIComponent(url.pathname));
       if (!file.startsWith(path.join(ROOT, "src")) || !fs.existsSync(file)) return res.writeHead(404).end();

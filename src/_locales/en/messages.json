@@ -51,7 +51,7 @@
     "message": "Sliders"
   },
   "sliderModeHint": {
-    "message": "The thumb's rings set the step size: grabbed inside ±1 (fine), middle ±5, outside ±10. Drag: pulled along the track the thumb moves in those steps, pulled up/down and circled it turns (clockwise for more). Turn: a press always turns."
+    "message": "The thumb's rings set the step size: grabbed inside ±1 (fine), middle ±5, outside ±10. Drag: the thumb follows the pointer along the track in those steps. Turn: the thumb turns like a knob (clockwise for more)."
   },
   "sliderDrag": {
     "message": "Drag"
@@ -60,7 +60,7 @@
     "message": "Turn"
   },
   "sliderHintDrag": {
-    "message": "Grabbed inside ±1, middle ±5, outside ±10 · pull sideways: move in those steps · pull up/down and circle: turn · Double-click: reset · Mouse wheel: change (Shift: 10 steps)"
+    "message": "Grabbed inside ±1, middle ±5, outside ±10 · pull sideways: move in those steps · Double-click: reset · Mouse wheel: change (Shift: 10 steps)"
   },
   "sliderHintTurn": {
     "message": "Turn the thumb like a knob: grabbed inside ±1, middle ±5, outside ±10 – clockwise for more · Click on the track: jump there · Double-click: reset · Mouse wheel: change (Shift: 10 steps)"
@@ -770,6 +770,21 @@
   "ruleAdded": {
     "message": "Rule saved – it applies from the next page load."
   },
+  "ytVolume": {
+    "message": "Hold YouTube's volume"
+  },
+  "ytVolumeHint": {
+    "message": "YouTube plays loudly mixed videos quieter than the player's slider shows. Switched on, every video plays exactly as loud as the slider says – loudly mixed videos get louder. After switching off, YouTube's own value applies again as soon as you move the slider or load a new video."
+  },
+  "ytVolumeOn": {
+    "message": "Hold the volume"
+  },
+  "ytSmoothHint": {
+    "message": "Sometimes YouTube changes the volume only a second or two after the next video started, and the sound jumps. Switched on, Klangbild lowers a loud video right at its start, as far as YouTube will, and fades the remaining jumps instead of letting them through. Your own changes to the slider still apply at once."
+  },
+  "ytSmoothOn": {
+    "message": "Smooth volume jumps"
+  },
   "continueWatching": {
     "message": "Continue watching"
   },
@@ -781,5 +796,287 @@
   },
   "forgetPositions": {
     "message": "Delete $1 saved positions"
+  },
+  "crossfader": {
+    "message": "Crossfader"
+  },
+  "crossfadeHint": {
+    "message": "Fades between two tabs: to the left B gets quieter, to the right A, in the middle both play at full volume. Copy-protected media stay unchanged."
+  },
+  "crossfadeNone": {
+    "message": "– no tab –"
+  },
+  "crossfadeLevels": {
+    "message": "A $1 % · B $2 %"
+  },
+  "crossfadeAuto": {
+    "message": "Automatic"
+  },
+  "crossfadeAutoHint": {
+    "message": "Automatic: while A plays sound, B gets quieter. When A goes quiet, B returns to the slider's volume."
+  },
+  "crossfadeDuck": {
+    "message": "B while A plays"
+  },
+  "crossfadeDucking": {
+    "message": "A is playing – B is lowered."
+  },
+  "crossfadeTabATip": {
+    "message": "Tab A – on the slider's left. With \"Automatic\" it has priority, e.g. a podcast or call."
+  },
+  "crossfadeTabBTip": {
+    "message": "Tab B – on the slider's right. With \"Automatic\" it gets quieter while A plays, e.g. music."
+  },
+  "crossfadeSliderTip": {
+    "message": "To the left B gets quieter, to the right A. In the middle both play at full volume. Double-click: middle."
+  },
+  "crossfadeOnlyA": {
+    "message": "Hear only tab A"
+  },
+  "crossfadeOnlyB": {
+    "message": "Hear only tab B"
+  },
+  "crossfadeSwitch": {
+    "message": "A ⇄ B"
+  },
+  "crossfadeSwitchTip": {
+    "message": "Quick switch: tab A and tab B trade places, the slider stays – so their volumes trade too, and with \"Automatic\" the other tab gets priority. Also works with a keyboard shortcut (set it at about:addons → gear icon → Manage Extension Shortcuts)."
+  },
+  "crossfadeAutoTip": {
+    "message": "Lowers B automatically while A plays sound and raises it again afterwards."
+  },
+  "crossfadeDuckTip": {
+    "message": "How loud B stays while A plays. Double-click: 25 %."
+  },
+  "crossfadeLevelsTip": {
+    "message": "Current volume of both tabs, including the automatic lowering"
+  },
+  "crossfadeRoleA": {
+    "message": "The crossfader's tab A"
+  },
+  "crossfadeRoleB": {
+    "message": "The crossfader's tab B"
+  },
+  "cmdCrossfadeSwitch": {
+    "message": "Crossfader: swap tab A and B"
+  },
+  "osdCrossfade": {
+    "message": "Crossfader swapped – A: $1"
+  },
+  "osdCrossfadeUnset": {
+    "message": "Crossfader: first pick tab A and B in the mixer"
+  },
+  "muteTabTip": {
+    "message": "Mutes the whole tab in the browser – also works for copy-protected media."
+  },
+  "mixerStateTip": {
+    "message": "Playback position"
+  },
+  "mixerLevelTip": {
+    "message": "Level of this media"
+  },
+  "mixerGainTip": {
+    "message": "Volume of this media, on top of the tab's settings. Double-click: 100 %."
+  },
+  "mixerMuteTip": {
+    "message": "Mute only this media"
+  },
+  "mixerDetect": {
+    "message": "Detect voices & duplicates"
+  },
+  "mixerDetectTip": {
+    "message": "Marks every playing medium with whether a voice or other sound is heard, and points out when two media play the same thing. Analyses the original sound locally, nothing leaves the computer. Not possible for copy-protected media, media from other servers without CORS and calls."
+  },
+  "mixerVoice": {
+    "message": "Voice"
+  },
+  "mixerVoiceTip": {
+    "message": "A voice is heard here right now (speech band, syllable rhythm, middle of the stereo image). An estimate without AI: singing over quiet music often counts as voice too."
+  },
+  "mixerSound": {
+    "message": "Sound"
+  },
+  "mixerSoundTip": {
+    "message": "Sound is heard here, but no recognizable voice – e.g. music or noises."
+  },
+  "mixerDuplicate": {
+    "message": "Same as “$1” – $2."
+  },
+  "mixerDuplicateSame": {
+    "message": "in sync"
+  },
+  "mixerDuplicateLater": {
+    "message": "$1 s later"
+  },
+  "mixerDuplicateEarlier": {
+    "message": "$1 s earlier"
+  },
+  "mixerDuplicateTip": {
+    "message": "These two media play the same sound – recognized by the loudness over the last seconds. Offset, they sound like an echo."
+  },
+  "mixerDuplicateMuteTip": {
+    "message": "Mute this medium, so only one is heard"
+  },
+  "crossfadeTrigger": {
+    "message": "Trigger:"
+  },
+  "crossfadeTriggerTip": {
+    "message": "When does tab A count as playing for the automatic mode?"
+  },
+  "crossfadeTriggerSound": {
+    "message": "Any sound"
+  },
+  "crossfadeTriggerSoundTip": {
+    "message": "B gets quieter as soon as A plays any sound."
+  },
+  "crossfadeTriggerVoice": {
+    "message": "Voice only"
+  },
+  "crossfadeTriggerVoiceTip": {
+    "message": "B only gets quieter when a voice is heard in A – music or noises in A leave B alone. Copy-protected media and calls in A can't be analysed, then any sound counts."
+  },
+  "crossfadeDuckingVoice": {
+    "message": "Someone is speaking in A – B is lowered."
+  },
+  "crossfadeAutoVoiceHint": {
+    "message": "Automatic (voice only): as soon as a voice is heard in A, B gets quieter. When it stops, B returns to the slider's volume."
+  },
+  "moduleSync": {
+    "message": "Audio/video sync"
+  },
+  "moduleLevel": {
+    "message": "Volume & stereo"
+  },
+  "moduleSound": {
+    "message": "Sound"
+  },
+  "moduleTransport": {
+    "message": "Transport"
+  },
+  "itemQuick": {
+    "message": "Quick values"
+  },
+  "itemBuiltin": {
+    "message": "Built-in presets"
+  },
+  "itemPosition": {
+    "message": "Position"
+  },
+  "itemControls": {
+    "message": "Buttons"
+  },
+  "itemVideoInfo": {
+    "message": "Video info"
+  },
+  "itemStatus": {
+    "message": "Status"
+  },
+  "itemHint": {
+    "message": "Hint"
+  },
+  "itemMedia": {
+    "message": "Media"
+  },
+  "pageStart": {
+    "message": "Start"
+  },
+  "pagePlayback": {
+    "message": "Playback"
+  },
+  "newPage": {
+    "message": "New page"
+  },
+  "addPage": {
+    "message": "Add page"
+  },
+  "pageName": {
+    "message": "Page name"
+  },
+  "movePageLeft": {
+    "message": "Move page left"
+  },
+  "movePageRight": {
+    "message": "Move page right"
+  },
+  "deletePage": {
+    "message": "Delete page (its modules stay available under “Add module”)"
+  },
+  "startEmpty": {
+    "message": "Nothing pinned yet. The star ☆ on a card brings a module here."
+  },
+  "pageEmpty": {
+    "message": "This page is empty. Add modules with “Edit layout” (the pencil at the top)."
+  },
+  "moduleEmpty": {
+    "message": "All items of this module are hidden."
+  },
+  "collapse": {
+    "message": "Collapse"
+  },
+  "expand": {
+    "message": "Expand"
+  },
+  "pin": {
+    "message": "Pin to Start"
+  },
+  "unpin": {
+    "message": "Unpin from Start"
+  },
+  "removeModule": {
+    "message": "Remove from this page"
+  },
+  "moveTo": {
+    "message": "Move to another page"
+  },
+  "dragHint": {
+    "message": "Drag to move – onto a tab for another page. The arrow keys move step by step."
+  },
+  "hideItem": {
+    "message": "Hide “$1”"
+  },
+  "showItem": {
+    "message": "Show “$1”"
+  },
+  "editLayout": {
+    "message": "Edit layout"
+  },
+  "editDone": {
+    "message": "Done"
+  },
+  "editHint": {
+    "message": "Drag cards and items by their grip ⠿, the eye hides items. Dropping a card on a tab moves it to that page."
+  },
+  "resetLayout": {
+    "message": "Reset layout"
+  },
+  "addModule": {
+    "message": "Add module"
+  },
+  "notPlaced": {
+    "message": "on no page"
+  },
+  "moveFrom": {
+    "message": "move from $1"
+  },
+  "allModulesHere": {
+    "message": "All modules are already on this page."
+  },
+  "viewTitle": {
+    "message": "View"
+  },
+  "view_list": {
+    "message": "List"
+  },
+  "view_knobs": {
+    "message": "Knobs"
+  },
+  "view_faders": {
+    "message": "Faders"
+  },
+  "view_tiles": {
+    "message": "Tiles"
+  },
+  "dialTypeValue": {
+    "message": "Click to type a value"
   }
 }

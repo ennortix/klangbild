@@ -64,6 +64,8 @@ async function render() {
   const prefs = { ...PREFS_DEFAULTS, ...all[PREFS_KEY] };
   $("resumeToggle").setAttribute("aria-pressed", String(prefs.resume));
   $("knobToggle").checked = prefs.knob;
+  $("ytVolumeToggle").setAttribute("aria-pressed", String(prefs.ytVolume));
+  $("ytSmoothToggle").setAttribute("aria-pressed", String(prefs.ytSmooth));
   const positions = Object.keys(isRecord(all[RESUME_KEY]) ? all[RESUME_KEY] : {}).length;
   $("resumeClear").replaceChildren(icon("trash"), t("forgetPositions", positions));
   $("resumeClear").hidden = !positions;
@@ -208,17 +210,17 @@ async function importBackup(file) {
   }
   const imported = [...byName.values()];
   if (imported.length) {
-    const { presets = [] } = await browser.storage.local.get("presets");
+    const { presets } = await browser.storage.local.get("presets");
     const names = new Set(imported.map((p) => p.name));
-    patch.presets = [...presets.filter((p) => !names.has(p.name)), ...imported];
+    patch.presets = [...(Array.isArray(presets) ? presets : []).filter((p) => !names.has(p?.name)), ...imported];
   }
 
   if (isRecord(data.defaults)) patch[DEFAULTS_KEY] = withoutEnabled(data.defaults);
 
   const hosts = (Array.isArray(data.disabled) ? data.disabled : []).filter((h) => typeof h === "string" && h);
   if (hosts.length) {
-    const { [DISABLED_KEY]: current = [] } = await browser.storage.local.get(DISABLED_KEY);
-    patch[DISABLED_KEY] = [...new Set([...current, ...hosts])];
+    const { [DISABLED_KEY]: current } = await browser.storage.local.get(DISABLED_KEY);
+    patch[DISABLED_KEY] = [...new Set([...(Array.isArray(current) ? current : []), ...hosts])];
   }
 
   // Rules with the same pattern are replaced.
@@ -268,6 +270,18 @@ $("resumeToggle").addEventListener("click", async () => {
   const { [PREFS_KEY]: prefs } = await browser.storage.local.get(PREFS_KEY);
   const next = { ...PREFS_DEFAULTS, ...prefs };
   next.resume = !next.resume;
+  await browser.storage.local.set({ [PREFS_KEY]: next });
+});
+$("ytVolumeToggle").addEventListener("click", async () => {
+  const { [PREFS_KEY]: prefs } = await browser.storage.local.get(PREFS_KEY);
+  const next = { ...PREFS_DEFAULTS, ...prefs };
+  next.ytVolume = !next.ytVolume;
+  await browser.storage.local.set({ [PREFS_KEY]: next });
+});
+$("ytSmoothToggle").addEventListener("click", async () => {
+  const { [PREFS_KEY]: prefs } = await browser.storage.local.get(PREFS_KEY);
+  const next = { ...PREFS_DEFAULTS, ...prefs };
+  next.ytSmooth = !next.ytSmooth;
   await browser.storage.local.set({ [PREFS_KEY]: next });
 });
 $("knobToggle").addEventListener("change", async (e) => {

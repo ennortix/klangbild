@@ -5,7 +5,11 @@ class DialogProcessor extends AudioWorkletProcessor {
     super();
     this.dsp = globalThis.AVFXDialog.createProcessor(sampleRate);
     this.silence = new Float32Array(128);
-    this.port.onmessage = (e) => this.dsp.setAmount(e.data);
+    this.stopped = false;
+    this.port.onmessage = (e) => {
+      if (e.data === null) this.stopped = true; // the chain was released, see releaseChain()
+      else this.dsp.setAmount(e.data);
+    };
   }
 
   process(inputs, outputs) {
@@ -13,7 +17,7 @@ class DialogProcessor extends AudioWorkletProcessor {
     const [outL, outR = new Float32Array(outL.length)] = outputs[0];
     if (l.length !== this.silence.length) this.silence = new Float32Array(l.length);
     this.dsp.process(l, r, outL, outR);
-    return true;
+    return !this.stopped;
   }
 }
 

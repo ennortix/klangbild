@@ -10,6 +10,8 @@ Edits audio and video on any website in real time – YouTube, Twitch, media lib
   - **Positive:** sound is early → the sound is delayed
   - **Negative:** sound is late (e.g. Bluetooth headphones) → the picture is delayed: the video is made invisible and a canvas on top shows its frames with an offset
 - **Skip silence**: pauses play 3× as fast (on top of the speed setting), the sound itself at its speed – for talks, lectures and podcasts. Silence is relative to the recording: the level of what is heard is followed, and what stays 20 dB under it (between −60 and −36 dBFS) for 0.25 s is a pause, so room noise counts as silence but a quiet speaker doesn't. The sidebar's timeline shows the time saved
+- **Hold YouTube's volume** (options page, off by default): YouTube plays loudly mixed videos below its slider (slider × a factor per video); switched on, the video stays at the slider's value. Mute, the sleep timer and the mixer keep working
+- **Smooth YouTube's volume jumps** (options page, on by default): YouTube often applies that factor only a second or two into a video, so a loud one starts at the full slider volume and then drops. Klangbild reads the loudness YouTube reports for the video and lowers it right at its start (if YouTube keeps raising it again, it's left to YouTube); changes YouTube makes later are faded – louder over 1.5 s, quieter over 0.4 s. The player's slider, keys and wheel still act at once. Not during ads, which have their own loudness
 - **Continue watching**: videos and audio of 2 minutes or more continue where they were left, on any website (2 s earlier, to get back into it). Not when the page starts somewhere itself, e.g. a link with a time. Positions are stored locally under a hash of the address, never from private windows; the last 1000 are kept. Can be switched off and cleared in the options
 
 **Audio** (Web Audio API)
@@ -24,7 +26,7 @@ Edits audio and video on any website in real time – YouTube, Twitch, media lib
 - Reverb 0 – 100 % (a generated room, computed only while it is on)
 - **Voice ↔ background** (−100 … +100): separates speech mixed to the center from music, effects and room sound, then lowers one of them by up to 24 dB. Per frequency it measures how similar the left and right channels are (STFT, no AI model); only the speech band counts as voice. Works best with stereo, with mono only the frequency range separates. Runs in an AudioWorklet and delays the sound by about 21 ms; switched completely out of the chain at 0
 - Live spectrum (48 bands) and level meter with peak hold
-- **System audio analyzer** (separate window, Audio tab → "System audio"): spectrum of everything the computer plays – also for copy-protected streams like Prime Video, whose audio pages can't access. Nothing is recorded.
+- **System audio analyzer** (separate window, Analyzer card → "System audio"): spectrum of everything the computer plays – also for copy-protected streams like Prime Video, whose audio pages can't access. Nothing is recorded.
   - Chrome on Windows: share the screen with "Also share system audio" (the picture is discarded immediately)
   - Any browser: a loopback input such as "Stereo Mix" or the free virtual cable VB-CABLE
 
@@ -35,19 +37,23 @@ Edits audio and video on any website in real time – YouTube, Twitch, media lib
 - Zoom, move the picture horizontally/vertically, flip horizontally/vertically, rotate in 90° steps
 - **Ambilight** 0 – 100 %: a soft glow around the picture in the colors of its edges. It lies over the page with a hole for the picture (clicks go through) and blends with "screen", so it shows on dark pages and in fullscreen black bars and disappears on white ones
 
+**Presets**
+- Clear speech, Night mode, Bass boost, Cinema, Vivid colors, Easy on the eyes – they keep speed and A/V offset. Custom presets can be saved, applied and deleted.
+
 **Extras**
-- Presets: Clear speech, Night mode, Bass boost, Cinema, Vivid colors, Easy on the eyes – they keep speed and A/V offset. Custom presets can be saved, applied and deleted.
 - Tools: jump ±10 s, frame-by-frame back/forward (at the measured frame rate), play/pause, A-B loop, repeat the whole video, sleep timer (15 – 90 min, fades out over the last 10 s, then pauses), screenshot as PNG (including the active color filters), video resolution, frame rate and dropped frames
 - Default for all sites: the current settings become the starting point for every site without its own remembered settings
-- **Sliders**: the thumb carries three rings and turns like a knob around the point where it was grabbed – the ring it was grabbed by sets the step size: inner 1 step per notch (fine), middle 5, outer 10, one notch every 18°, clockwise up; hovering lights up the ring under the pointer and names its step size (±1, ±5, ±10) below the thumb. Options page ("Sliders"): Drag (default) – pulled along the track the thumb moves in steps of the ring it was grabbed by (1, 5 or 10), pulled up or down and circled it turns; Turn – a press always turns. Both: a click on the track jumps there, double-click resets, the mouse wheel steps (Shift: 10 steps), a bubble above the thumb shows the value while it changes
+- **Sliders**: the thumb carries three rings – the ring it was grabbed by sets the step size: inner 1 step (fine), middle 5, outer 10; hovering lights up the ring under the pointer and names its step size (±1, ±5, ±10) below the thumb. Options page ("Sliders"): Drag (default) – the thumb follows the pointer along the track in those steps; Turn – the thumb turns like a knob around the point where it was grabbed, one notch every 18°, clockwise up. Both: a click on the track jumps there, double-click resets, the mouse wheel steps (Shift: 10 steps), a bubble above the thumb shows the value while it changes
 - Options page (Extras → "Manage sites & backup"): list and delete remembered sites, disabled sites and custom presets, remove the default, export everything to a JSON backup and import it again (merged, values are checked; positions for "continue watching" are not exported)
 - **Rules**: settings for addresses, set up in the options page – a preset and/or a speed for e.g. `example.com/podcasts/*` or `example.com/watch?v=*`. A host includes its subdomains, `*` stands for any text, a path without `*` is a prefix; the most specific matching rule wins. Applied on top of the site's remembered settings when a page loads, and again when a single-page site (YouTube, …) enters, leaves or switches a rule without reloading. The panel's status line names the active rule
 - "Disable on this site": Klangbild leaves video and audio on that site completely alone (the page is reloaded); re-enable it from the panel or the options page
-- **Firefox sidebar** (sidebar icon or View → Sidebar → Klangbild): the panel stays open and follows the active tab, with more room than the compact popup:
+- **Sidebar** – Firefox: sidebar icon or View → Sidebar → Klangbild; Chrome: side panel (side panel button → Klangbild, or right-click the toolbar icon → Open side panel): the panel stays open and follows the active tab, with more room than the compact popup:
   - Timeline of the primary media: position, seek bar with the A-B loop marked, jump back/forward (short and long jump, adjustable), frame by frame, play/pause
-  - Extended limits: speed 0.1 – 16×, volume up to 800 %, EQ ±24 dB, audio delay up to 10 s, brightness/contrast/saturation up to 500 %, zoom 25 – 500 % and more (Firefox mutes the sound outside 0.25 – 4×). Can be switched off in the Customize tab.
-  - − / + buttons on every slider and a custom step size per slider (Customize tab); the steps always pass through the default, so 1× stays reachable
+  - Extended limits: speed 0.1 – 16×, volume up to 800 %, EQ ±24 dB, audio delay up to 10 s, brightness/contrast/saturation up to 500 %, zoom 25 – 500 % and more (Firefox mutes the sound outside 0.25 – 4×). Can be switched off on the Customize page.
+  - − / + buttons on every slider and a custom step size per slider (Customize page); the steps always pass through the default, so 1× stays reachable
   - Mixer: every video and audio of every tab, each with its own volume (0 – 200 %), mute, play/pause and level meter, on top of the tab's settings and until the page is reloaded. Media from another server without CORS permission is controlled through the player's own volume instead (at most 100 %), so it can't go silent. Plus the browser's tab mute, which also works for copy-protected media
+  - Detection ("Detect voices & duplicates", on by default): every playing medium is marked "Voice" or "Sound", and media playing the same audio – in two tabs or twice in one, in sync or offset like an echo – are pointed out with the offset and a button to mute one. Measured locally on the original sound, before any effect, without an AI model: a voice shows as a widely spreading level (syllables and pauses), mostly in 250–4000 Hz and in the middle of the stereo image; duplicates by comparing the loudness over the last 12 s at offsets up to ±3 s. A good estimate, not a certainty – singing over quiet music may count as voice. Not possible for copy-protected media, media from other servers without CORS and calls (WebRTC)
+  - Crossfader (top of the mixer): pick tab A and tab B; to the left B gets quieter, to the right A, in the middle both play at full volume. "Automatic" lowers B to an adjustable volume (default 25 %) while A plays sound and brings it back to the slider's volume when A goes quiet – e.g. music in one tab, a podcast or call in the other. The quick switch ("A ⇄ B", also as a keyboard shortcut) swaps tab A and B while the slider stays, so their volumes trade places and with "Automatic" the other tab gets priority; the A and B at the slider's ends jump to hearing only that tab. With the trigger "Voice only", B is only lowered while a voice is heard in A (see detection below); where A can't be analysed (copy-protected media, calls) any sound counts. It is kept by the background page, so it keeps working when the sidebar switches tabs or is closed, and a reloaded page starts at its volume again; it lasts until the browser is closed. Copy-protected media aren't affected
 - Light and dark design, following the system setting
 - The toolbar icon shows the tab's speed when it isn't 1×, and "off" while all effects are bypassed
 - Tools, shortcuts and the analyzer act on the tab's "primary media": playing beats paused, large beats small – embedded players included
@@ -62,17 +68,31 @@ Edits audio and video on any website in real time – YouTube, Twitch, media lib
 | Alt+Shift+E | All effects on/off |
 | Alt+Shift+L | A-B loop: set A → set B → off |
 | Alt+Shift+S | Save screenshot |
-| *(unassigned)* | Open in the sidebar (Firefox), reset speed to 1×, jump back/forward 10 s, volume ±10 % |
+| *(unassigned)* | Open in the sidebar / side panel, reset speed to 1×, jump back/forward 10 s, volume ±10 % |
 
 Every change made with a shortcut is briefly shown on top of the video.
 
 **Languages**
 - English and German – the panel, on-screen messages and shortcut names follow the browser's language. Texts live in `src/_locales/<lang>/messages.json`.
 
+**Layout**
+- The panel is built from **modules** shown as cards – Volume & stereo, Equalizer, Color, Sleep timer, Mixer and so on. A card collapses with a click on its title
+- **Look**: graphite surfaces, teal for what is switched on, amber for values changed from their default and for pinned cards; light and dark follow the system
+- Each card with sliders has a **view**: List (sliders with − / + in the sidebar), **Knobs** (drag up and down, Shift: fine), **Faders** (a vertical slider as on a mixing desk, a click jumps there) or **Tiles** (the value big, dragged sideways). All of them: arrow keys step (Page Up/Down: 10 steps), the wheel steps, a double-click resets, a click on the value lets you type it. Start shows knobs and faders by default
+- **Pages** (the bar at the bottom; a rail on the left in a wide sidebar) hold the cards. **Start** is the dashboard: the star ☆ on any card pins it there, and it stays on its own page too
+- **Edit layout** (pencil at the top right):
+  - drag cards by their grip ⠿ to sort them, drop one on a tab to move it to that page, or pick the page in the card's menu; × removes it from the page
+  - inside a card, drag the single items (one slider, one switch, …) and hide them with the eye
+  - pick the card's view: List, Knobs, Faders or Tiles
+  - add, rename, reorder and delete pages; "Add module" brings back removed modules or moves one from another page; "Reset layout" restores the default
+  - everything also works with the keyboard: the arrow keys move a focused grip
+- The popup and the sidebar keep their own layout (the sidebar also has the Mixer and Customize modules); a wide sidebar shows the cards in two columns
+- Modules added by later versions appear on their default page; a module that was removed stays removed
+
 **Controls**
 - Switch at the top right: all effects on/off (A/B comparison; speed is kept)
 - Double-clicking a slider name or clicking "reset" restores its default
-- "Remember for *site*": settings are stored per website and applied automatically on the next visit; sites without their own settings use the default for all sites, if one is set
+- "Remember for *site*" (the bar under the header): settings are stored per website and applied automatically on the next visit; sites without their own settings use the default for all sites, if one is set
 
 ## Installation (development)
 
@@ -126,7 +146,7 @@ On installation the browser asks for permission to access all websites – it is
 - Some players reset the speed on their own; the extension restores it as long as it isn't 1×. If a player keeps fighting back, it gives up after 10 corrections within 2 seconds instead of switching back and forth forever.
 - **After an extension update** a media element stays connected to the old version's Web Audio routing (it can be connected only once and never released).
   - Firefox: the old version is shut down, its routing keeps the last settings and can't be reached any more. The panel says so right away and offers "Reload and continue", which reloads the tab and continues playback at the same position.
-  - Chrome: the old version keeps running and stays the audio engine of its elements; the new one sends it the settings (through events on the element), so everything keeps working without a reload. This needs the old version to be 1.2.0 or newer; with older ones the panel offers the reload as in Firefox.
+  - Chrome: the old version keeps running and stays the audio engine of its elements; the new one sends it the settings (through events on the element), so everything keeps working without a reload. This needs the old version to be 1.2.1 or newer; with older ones the panel offers the reload as in Firefox.
 - **Sleep timer** runs in the page: it ends when the page is left or reloaded, and in background tabs the browser may delay it by up to a minute.
 - Media that is never inserted into the page (e.g. played in the background via `new Audio()`) can't be found. Videos inside web components (shadow DOM) are detected.
 
@@ -155,9 +175,9 @@ src/
 │   ├── presets.js    Built-in and custom presets
 │   ├── tools.js      Loop, frames, seeking, screenshot, video info, shortcut list
 │   ├── defaults.js   Default for all sites
-│   ├── sidebar.js    Firefox sidebar: timeline, extended limits, slider steps
+│   ├── sidebar.js    Sidebar: timeline, extended limits, slider steps
 │   ├── sliderfx.js   Slider extras: drag or turn (ring knob), wheel, value bubble
-│   ├── mixer.js      Firefox sidebar: mixer across all tabs
+│   ├── mixer.js      Sidebar: mixer across all tabs
 │   └── icons.js      Inline SVG icons
 ├── options/          Options page: sites, presets, default, backup
 └── icons/            SVG (Firefox) and PNG (Chrome) icons

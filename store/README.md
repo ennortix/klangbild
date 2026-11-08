@@ -4,8 +4,8 @@ Alles, was du zum Hochladen brauchst:
 
 | Datei | Wofür |
 | --- | --- |
-| `../web-ext-artifacts/klangbild-firefox-1.2.0.zip` | Upload bei Firefox Add-ons |
-| `../web-ext-artifacts/klangbild-chrome-1.2.0.zip` | Upload im Chrome Web Store |
+| `../web-ext-artifacts/klangbild-firefox-1.2.1.zip` | Upload bei Firefox Add-ons |
+| `../web-ext-artifacts/klangbild-chrome-1.2.1.zip` | Upload im Chrome Web Store |
 | `chrome/` | Texte für den Chrome Web Store, eine Datei pro Feld und Sprache |
 | `firefox/` | Texte für Firefox Add-ons, eine Datei pro Feld und Sprache |
 | `review-answers.md` | Begründungen der Berechtigungen, Datenschutz-Angaben, Hinweise für die Prüfer |
@@ -41,16 +41,16 @@ Die ZIPs neu erzeugen: `npm run package`. Die Bilder neu erzeugen (z. B. nach Ä
 2. **Datenschutzerklärung öffentlich machen.** Der Chrome Web Store verlangt eine öffentliche URL. Einfachste Wege:
    - als öffentliches GitHub-Gist (Inhalt von `privacy-policy.md` einfügen, „Create public gist“) oder
    - im GitHub-Repository des Projekts, über GitHub Pages.
-3. **Version prüfen:** steht in `package.json` (aktuell `1.2.0`) und wird beim Build in beide Manifeste übernommen. Für jedes spätere Update muss sie erhöht werden.
-4. **Datenschutzerklärung aktualisiert (Stand 2. November 2026):** „Weiterschauen“ speichert Wiedergabepositionen lokal. `docs/privacy.html` muss deshalb vor dem Einreichen von 1.2.0 veröffentlicht sein (committen und pushen, GitHub Pages aktualisiert sich dann selbst).
+3. **Version prüfen:** steht in `package.json` (aktuell `1.2.1`) und wird beim Build in beide Manifeste übernommen. Für jedes spätere Update muss sie erhöht werden.
+4. **Datenschutzerklärung aktualisiert (Stand 2. November 2026):** „Weiterschauen“ speichert Wiedergabepositionen lokal. `docs/privacy.html` muss deshalb vor dem Einreichen von 1.2.1 veröffentlicht sein (committen und pushen, GitHub Pages aktualisiert sich dann selbst).
 
-## Update auf 1.2.0 (Eintrag existiert schon)
+## Update auf 1.2.1 (Eintrag existiert schon)
 
-**Firefox:** <https://addons.mozilla.org/developers/> → Klangbild → „Upload New Version“ → `klangbild-firefox-1.2.0.zip`. Quellcode-Frage: „No“. Versionshinweise siehe unten. Danach unter „Edit Product Page“ Kurzbeschreibung und Beschreibung aus `firefox/` ersetzen (EN und DE), „Notes for Reviewers“ aus `review-answers.md`.
+**Firefox:** <https://addons.mozilla.org/developers/> → Klangbild → „Upload New Version“ → `klangbild-firefox-1.2.1.zip`. Quellcode-Frage: „No“. Versionshinweise siehe unten. Danach unter „Edit Product Page“ Kurzbeschreibung und Beschreibung aus `firefox/` ersetzen (EN und DE), „Notes for Reviewers“ aus `review-answers.md`.
 
-**Chrome:** Developer Dashboard → Klangbild → „Paket“ → „Neues Paket hochladen“ → `klangbild-chrome-1.2.0.zip`. Im „Store-Eintrag“ die Beschreibung aus `chrome/` ersetzen (EN und DE), unter „Datenschutz“ die `storage`-Begründung aus `review-answers.md` aktualisieren. Dann „Zur Überprüfung einreichen“.
+**Chrome:** Developer Dashboard → Klangbild → „Paket“ → „Neues Paket hochladen“ → `klangbild-chrome-1.2.1.zip`. Im „Store-Eintrag“ die Beschreibung aus `chrome/` ersetzen (EN und DE), unter „Datenschutz“ die `storage`-Begründung aus `review-answers.md` aktualisieren. Dann „Zur Überprüfung einreichen“.
 
-**Versionshinweise 1.2.0** (Firefox-Feld „Release notes“):
+**Versionshinweise 1.2.1** (Firefox-Feld „Release notes“):
 
 > New: skip silence, continue watching, rules for addresses, ambilight, voice ↔ background, loudness leveling, reverb, stereo width, color vision correction, sleep timer, options page with backup, the Firefox sidebar with timeline, extended limits and a mixer for all tabs, and sliders with three rings (steps of 1, 5 or 10, or turn them like a knob). Plus many fixes.
 
@@ -62,7 +62,7 @@ Die ZIPs neu erzeugen: `npm run package`. Die Bilder neu erzeugen (z. B. nach Ä
 
 1. Auf <https://addons.mozilla.org/developers/> mit einem Mozilla-Konto anmelden.
 2. „Submit a New Add-on“ → **„On this site“** wählen.
-3. `klangbild-firefox-1.2.0.zip` hochladen. Die automatische Prüfung sollte ohne Fehler und Warnungen durchlaufen.
+3. `klangbild-firefox-1.2.1.zip` hochladen. Die automatische Prüfung sollte ohne Fehler und Warnungen durchlaufen.
 4. Frage nach Quellcode: **„No“** (siehe `review-answers.md`).
 5. Eintrag ausfüllen mit den Dateien aus `firefox/` (siehe Tabelle oben); Lizenz wählen; Datenschutz-URL eintragen.
 6. Unter „Notes for Reviewers“ den Text aus `review-answers.md` einfügen.
@@ -72,7 +72,7 @@ Die ZIPs neu erzeugen: `npm run package`. Die Bilder neu erzeugen (z. B. nach Ä
 ## Chrome Web Store (einmalig 5 US-$ Registrierung)
 
 1. Auf <https://chrome.google.com/webstore/devconsole> anmelden und das Entwicklerkonto registrieren (einmalige Gebühr, E-Mail-Bestätigung).
-2. „Neues Element“ → `klangbild-chrome-1.2.0.zip` hochladen.
+2. „Neues Element“ → `klangbild-chrome-1.2.1.zip` hochladen.
 3. **Store-Eintrag:** Beschreibung aus `chrome/description-en.txt`, Kategorie, Sprache; Icon `icon-128.png`, Screenshots und die kleine Werbekachel hochladen. Optional Deutsch als weitere Sprache hinzufügen (`chrome/summary-de.txt`, `chrome/description-de.txt`).
 4. **Datenschutz:** Zweck, Berechtigungs-Begründungen, „kein Remote-Code“ und die Datennutzung exakt wie in `review-answers.md`; Datenschutz-URL eintragen.
 5. **Vertrieb:** „Öffentlich“, alle Regionen.

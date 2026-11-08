@@ -62,13 +62,17 @@ export function loadCommon(api = {}) {
 }
 
 // background.js on top of common.js; badge calls are recorded in `badges`, messages
-// to tabs in `sent`. updated(tabId, change) runs the tabs.onUpdated listeners.
-export function loadBackground(storage = makeStorage()) {
+// to tabs in `sent`. updated(tabId, change, tab) runs the tabs.onUpdated listeners,
+// removed(tabId) the tabs.onRemoved ones; tabs.get() answers from `tabs` (id -> tab,
+// null: closed; ids not in it are open tabs without sound).
+export function loadBackground(storage = makeStorage(), session = makeStorage()) {
   const badges = [];
   const sent = [];
   const onUpdated = [];
+  const onRemoved = [];
+  const tabs = {};
   const ctx = loadCommon({
-    storage: { local: storage },
+    storage: { local: storage, session },
     action: {
       setBadgeText: async (o) => badges.push(o.text),
       setBadgeBackgroundColor: async () => {},
@@ -76,17 +80,25 @@ export function loadBackground(storage = makeStorage()) {
     commands: { onCommand: { addListener() {} } },
     tabs: {
       onUpdated: { addListener: (fn) => onUpdated.push(fn) },
-      onRemoved: { addListener() {} },
+      onRemoved: { addListener: (fn) => onRemoved.push(fn) },
+      get: async (id) => {
+        if (tabs[id] === null) throw new Error("No tab"); // closed
+        if (!tabs[id]) return { id };
+        return { id, ...tabs[id] };
+      },
       sendMessage: async (tabId, msg) => sent.push({ tabId, msg }),
     },
     runtime: { onMessage: { addListener() {} }, sendMessage: async () => {} },
   });
   ctx.importScripts = () => {};
   vm.runInContext(read("background.js"), ctx);
-  const updated = async (tabId, change) => {
-    for (const fn of onUpdated) await fn(tabId, change, { id: tabId, url: change.url });
+  const updated = async (tabId, change, tab = { id: tabId, url: change.url }) => {
+    for (const fn of onUpdated) await fn(tabId, change, tab);
   };
-  return { ctx, badges, sent, updated };
+  const removed = async (tabId) => {
+    for (const fn of onRemoved) await fn(tabId);
+  };
+  return { ctx, badges, sent, updated, removed, tabs, session };
 }
 
 // options.js with stubbed DOM helpers; `nodes` holds the elements fetched with $().

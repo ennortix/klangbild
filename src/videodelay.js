@@ -3,6 +3,17 @@
 // buffered frames `delayMs` later. The element keeps playing, so its sound stays
 // on time while the picture lags behind.
 globalThis.AVFXVideoDelay = class VideoDelay {
+  // Bytes the buffered frames may take (4 per pixel). A 4K video at 60 fps and 1 s delay
+  // would need about 2 GB at full size: longer delays and bigger pictures are buffered
+  // smaller instead, the browser scales them up again (a little softer).
+  static BUDGET = 256 * 1024 * 1024;
+
+  // Size to capture a w × h picture at, so `frames` frames fit the budget.
+  static captureSize(w, h, frames) {
+    const scale = Math.min(1, Math.sqrt(VideoDelay.BUDGET / (Math.max(1, frames) * w * h * 4)));
+    return { width: Math.max(1, Math.round(w * scale)), height: Math.max(1, Math.round(h * scale)) };
+  }
+
   static create(video, onFail) {
     if (!video.parentNode) return null;
     return new VideoDelay(video, onFail);
@@ -14,6 +25,8 @@ globalThis.AVFXVideoDelay = class VideoDelay {
     this.delayMs = 0;
     this.frames = []; // { at: performance.now() timestamp, bmp: ImageBitmap }
     this.lastTime = -1;
+    this.lastCapture = 0;
+    this.interval = 1000 / 60; // ms between captured frames, measured (smoothed)
     this.capturing = false;
     this.destroyed = false;
     this.vstyle = getComputedStyle(video); // live object
@@ -29,6 +42,19 @@ globalThis.AVFXVideoDelay = class VideoDelay {
 
     this.tick = this.tick.bind(this);
     this.raf = requestAnimationFrame(this.tick);
+
+    // currentTime moves on every animation frame, so a 30 fps video on a 60 Hz screen would
+    // buffer each picture twice. Without this API every animation frame counts as new.
+    this.newFrame = true;
+    this.watchFrames = Boolean(video.requestVideoFrameCallback);
+    if (this.watchFrames) {
+      const onFrame = () => {
+        if (this.destroyed) return;
+        this.newFrame = true;
+        video.requestVideoFrameCallback(onFrame);
+      };
+      video.requestVideoFrameCallback(onFrame);
+    }
   }
 
   // Re-checked every frame: players that rewrite the whole style attribute would
@@ -117,17 +143,23 @@ globalThis.AVFXVideoDelay = class VideoDelay {
 
   capture(rect) {
     const v = this.video;
-    if (this.capturing || v.readyState < 2 || v.currentTime === this.lastTime) return;
+    if (this.capturing || !this.newFrame || v.readyState < 2 || v.currentTime === this.lastTime) return;
     this.lastTime = v.currentTime;
     this.capturing = true;
+    this.newFrame = !this.watchFrames;
 
     const at = performance.now();
-    // Capture at display size, not source size, to keep the buffer small.
-    const opts = {
-      resizeWidth: Math.max(1, Math.round(Math.min(rect.w, v.videoWidth))),
-      resizeHeight: Math.max(1, Math.round(Math.min(rect.h, v.videoHeight))),
-      resizeQuality: "medium",
-    };
+    const gap = at - this.lastCapture;
+    if (this.lastCapture && gap < 1000) this.interval += (gap - this.interval) * 0.1;
+    this.lastCapture = at;
+    // At display size, not source size, and within the memory budget for the frames
+    // the delay holds.
+    const size = VideoDelay.captureSize(
+      Math.min(rect.w, v.videoWidth),
+      Math.min(rect.h, v.videoHeight),
+      Math.ceil(this.delayMs / Math.max(1, this.interval)) + 2
+    );
+    const opts = { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: "medium" };
     createImageBitmap(v, opts)
       .then((bmp) => {
         if (this.destroyed) bmp.close();

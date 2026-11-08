@@ -1,6 +1,6 @@
 # Answers for the store review forms
 
-Copy these into the corresponding fields. They match what the code actually does (version 1.2.0).
+Copy these into the corresponding fields. They match what the code actually does (version 1.2.1).
 
 ## Chrome Web Store – "Privacy practices" tab
 

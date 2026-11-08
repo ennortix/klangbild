@@ -361,7 +361,9 @@ globalThis.AVFX = {
   RESUME: { minDuration: 120, minTime: 30, endMargin: 20, rewind: 2, maxEntries: 1000 },
   RESUME_KEY: "resumePositions",
   PREFS_KEY: "prefs",
-  PREFS_DEFAULTS: Object.freeze({ resume: true, knob: false }), // knob: sliders turn instead of drag (sliderfx.js)
+  // knob: sliders turn instead of drag (sliderfx.js); ytVolume: hold YouTube's volume at its slider,
+  // ytSmooth: fade YouTube's own volume jumps (content.js)
+  PREFS_DEFAULTS: Object.freeze({ resume: true, knob: false, ytVolume: false, ytSmooth: true }),
 
   resumeKey(url) {
     try {
@@ -481,6 +483,177 @@ globalThis.AVFX = {
       if (Math.abs(rate - fps) / rate < 0.01 && (best === null || Math.abs(rate - fps) < Math.abs(best - fps))) best = rate;
     }
     return 1 / (best ?? fps);
+  },
+
+  // Crossfader of the sidebar's mixer between two tabs A and B (tab ids or null).
+  // position: −100 (only A) … 0 (both at full volume) … +100 (only B).
+  // auto: while A is audible, B is lowered to duck % (or further, if the slider says so);
+  // trigger "voice": only while a voice is heard in A, see VOICE.
+  CROSSFADE_KEY: "crossfade",
+  CROSSFADE_DEFAULTS: Object.freeze({ a: null, b: null, position: 0, auto: false, duck: 25, trigger: "sound" }),
+
+  sanitizeCrossfade(input) {
+    const { CROSSFADE_DEFAULTS: D, clamp } = globalThis.AVFX;
+    const x = input && typeof input === "object" ? input : {};
+    const id = (v) => (Number.isInteger(v) && v >= 0 ? v : null);
+    const num = (v, min, max, fallback) => (Number.isFinite(v) ? Math.round(clamp(v, min, max)) : fallback);
+    const a = id(x.a);
+    const b = id(x.b);
+    return {
+      a,
+      b: b === a ? null : b,
+      position: num(x.position, -100, 100, D.position),
+      auto: x.auto === true,
+      duck: num(x.duck, 0, 100, D.duck),
+      trigger: x.trigger === "voice" ? "voice" : "sound",
+    };
+  },
+
+  // Where the fader actually is: the slider, or lower for B while A plays (automatic).
+  crossfadePosition(config, aPlaying) {
+    return config.auto && aPlaying ? Math.min(config.position, config.duck - 100) : config.position;
+  },
+
+  // Volume factors (0..1) of both tabs: each is at full volume up to the middle.
+  crossfadeGains(position) {
+    const p = globalThis.AVFX.clamp(position, -100, 100);
+    return { a: Math.min(100, 100 - p) / 100, b: Math.min(100, 100 + p) / 100 };
+  },
+
+  // ---------- Detection (mixer): voice and duplicate audio ----------
+
+  // Voice: measured on ~0.7 s windows of an element's raw sound (before any effect).
+  // Speech jumps between syllables and pauses, so its frame levels spread widely (measured:
+  // ~20 dB for plain speech, ~8 dB with a music bed 15 dB under it, ~3 dB for music); most
+  // of its power is in 250–4000 Hz and it usually sits in the middle of the stereo image.
+  // No AI model, so it is a good guess, not a certainty: a solo instrument with rests or
+  // singing over quiet music may count as voice, a talk with loud music under it may not.
+  VOICE: {
+    floor: -50, // dBFS: quieter is silence
+    frameMs: 20,
+    clamp: -70, // dB: frames below count as this (digital silence would weigh too much)
+    bandLo: 250,
+    bandHi: 4000,
+    minShare: 0.45, // of the power 50 Hz – 16 kHz in the speech band
+    minStd: 6, // dB: spread of the frame levels
+    minCorr: 0.3, // left/right correlation (1 = mono)
+    historyMs: 2000, // frames looked at for the spread
+    holdMs: 1500, // "voice" stays this long after the last voiced window
+  },
+
+  // Duplicates: the frame levels of two media over the last seconds are compared at
+  // every offset up to maxLagMs; identical audio correlates almost perfectly.
+  // Measured (smoothed, see smoothLevels): a copy 0.99, the same speech with a music bed
+  // added 0.95 (counts: the same content), different speech or music below 0.5.
+  DUPLICATE: { keepMs: 15000, sendMs: 12000, maxLagMs: 3000, minOverlapMs: 4000, minCorr: 0.93, minStd: 3 },
+
+  // Level in dB of each frame of the mid signal; frames end at the window's end, earlier
+  // samples that don't fill a frame are dropped.
+  frameLevels(left, right, rate, frameMs) {
+    const hop = Math.max(1, Math.round((rate * frameMs) / 1000));
+    const count = Math.floor(left.length / hop);
+    const offset = left.length - count * hop;
+    const out = new Float32Array(count);
+    for (let f = 0; f < count; f++) {
+      let sum = 0;
+      for (let i = offset + f * hop, end = i + hop; i < end; i++) {
+        const m = (left[i] + right[i]) / 2;
+        sum += m * m;
+      }
+      out[f] = 10 * Math.log10(sum / hop + 1e-12);
+    }
+    return out;
+  },
+
+  // Correlation of the two channels; 1 for mono (or a silent right channel).
+  channelCorrelation(left, right) {
+    let lr = 0;
+    let ll = 0;
+    let rr = 0;
+    for (let i = 0; i < left.length; i++) {
+      lr += left[i] * right[i];
+      ll += left[i] * left[i];
+      rr += right[i] * right[i];
+    }
+    if (rr < ll * 1e-4 || ll < rr * 1e-4) return 1;
+    return lr / Math.sqrt(ll * rr);
+  },
+
+  // Share of the power 50 Hz – 16 kHz between lo and hi, from getFloatFrequencyData (dB).
+  bandShare(dbLeft, dbRight, binHz, lo, hi) {
+    let band = 0;
+    let total = 0;
+    const from = Math.ceil(50 / binHz);
+    const to = Math.min(dbLeft.length, Math.floor(16000 / binHz));
+    for (let k = from; k < to; k++) {
+      const p = 10 ** (dbLeft[k] / 10) + 10 ** (dbRight[k] / 10);
+      if (!Number.isFinite(p)) continue;
+      total += p;
+      if (k * binHz >= lo && k * binHz <= hi) band += p;
+    }
+    return total > 0 ? band / total : 0;
+  },
+
+  // Spread (dB) of frame levels; NaN marks frames that weren't measured.
+  levelSpread(levels, clampDb) {
+    const valid = [];
+    for (const v of levels) if (Number.isFinite(v)) valid.push(Math.max(clampDb, v));
+    if (valid.length < 10) return 0;
+    const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+    return Math.sqrt(valid.reduce((a, b) => a + (b - mean) ** 2, 0) / valid.length);
+  },
+
+  // features: { level, share, std, corr }
+  isVoice(f) {
+    const V = globalThis.AVFX.VOICE;
+    return f.level > V.floor && f.share >= V.minShare && f.std >= V.minStd && f.corr >= V.minCorr;
+  },
+
+  // A level history prepared for envelopeMatch(): quiet frames all at the floor (their exact
+  // level is noise) and a 3-frame average, so a grid shifted by a frame matters little.
+  smoothLevels({ start, values }, floor) {
+    const at = (i) => (values[i] === null || values[i] === undefined ? null : Math.max(floor, values[i]));
+    return {
+      start,
+      values: values.map((_, i) => {
+        const near = [at(i - 1), at(i), at(i + 1)].filter((v) => v !== null);
+        return at(i) === null ? null : near.reduce((a, b) => a + b, 0) / near.length;
+      }),
+    };
+  },
+
+  // Best match of two level histories { start, values } (start: index of the first value
+  // on the common frame grid, values: dB or null). lag > 0: b plays the same lag frames
+  // later than a. Null when they don't overlap enough or are too flat to tell.
+  envelopeMatch(a, b, maxLag, minOverlap, minStd) {
+    let best = null;
+    for (let lag = -maxLag; lag <= maxLag; lag++) {
+      let n = 0;
+      let sa = 0;
+      let sb = 0;
+      let saa = 0;
+      let sbb = 0;
+      let sab = 0;
+      for (let i = 0; i < a.values.length; i++) {
+        const x = a.values[i];
+        const j = a.start + i + lag - b.start;
+        const y = j >= 0 && j < b.values.length ? b.values[j] : null;
+        if (x === null || y === null) continue;
+        n++;
+        sa += x;
+        sb += y;
+        saa += x * x;
+        sbb += y * y;
+        sab += x * y;
+      }
+      if (n < minOverlap) continue;
+      const va = saa / n - (sa / n) ** 2;
+      const vb = sbb / n - (sb / n) ** 2;
+      if (va < minStd ** 2 || vb < minStd ** 2) continue;
+      const corr = (sab / n - (sa / n) * (sb / n)) / Math.sqrt(va * vb);
+      if (!best || corr > best.corr) best = { corr, lag, overlap: n };
+    }
+    return best;
   },
 
   // Stereo width, channel swap and mono as a 2×2 matrix of gains, [from][to]. Mid/side:

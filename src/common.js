@@ -378,11 +378,20 @@ globalThis.AVFX = {
     }
   },
 
+  // A live stream rather than a recording: no end (Infinity), or one no recording has.
+  // Firefox gives Twitch's live streams 9223372036855 s (2^63 µs) – taken for a long video,
+  // "continue watching" jumped back to an old place in the stream and the player waited
+  // there for data that doesn't exist any more (an endless spinner).
+  MAX_RECORDING_S: 1e7, // ~115 days
+  isLive(duration) {
+    return !Number.isFinite(duration) || duration > globalThis.AVFX.MAX_RECORDING_S;
+  },
+
   // Where to continue, or null: same length (±2 s), not at the very start or end, and
   // only if the page hasn't started somewhere itself (a link with a time, its own resume).
   resumeTime(saved, duration, currentTime) {
-    const { RESUME: R } = globalThis.AVFX;
-    if (!saved || !Number.isFinite(saved.t) || !Number.isFinite(duration) || duration < R.minDuration) return null;
+    const { RESUME: R, isLive } = globalThis.AVFX;
+    if (!saved || !Number.isFinite(saved.t) || isLive(duration) || duration < R.minDuration) return null;
     if (Math.abs(saved.d - duration) > 2 || currentTime > 5) return null;
     if (saved.t < R.minTime || saved.t > duration - R.endMargin) return null;
     return saved.t - R.rewind;

@@ -656,7 +656,9 @@
       !isProtected(el) &&
       !audioLocked(el) &&
       !remote.has(el) &&
-      !el.srcObject &&
+      // a camera or a call (Chrome would silence it in Web Audio); a MediaSource handle
+      // (Twitch plays its streams so) is an ordinary stream
+      !(typeof MediaStream !== "undefined" && el.srcObject instanceof MediaStream) &&
       !nativeMix(el) &&
       el.readyState >= HTMLMediaElement.HAVE_METADATA
     );
@@ -1511,7 +1513,7 @@
     return w;
   }
 
-  const longEnough = (el) => Number.isFinite(el.duration) && el.duration >= AVFX.RESUME.minDuration;
+  const longEnough = (el) => !AVFX.isLive(el.duration) && el.duration >= AVFX.RESUME.minDuration;
 
   function savePosition(el, now = false) {
     if (!continueOn || retired || !longEnough(el)) return;
@@ -1585,7 +1587,7 @@
   // Elements whose duration doesn't fit (an ad before the video) are skipped.
   function applyResume(el) {
     if (!resume) return;
-    if (Date.now() > resume.until || el.duration === Infinity) {
+    if (Date.now() > resume.until || AVFX.isLive(el.duration)) {
       resume = null; // timed out, or a live stream: the old position means nothing there
       return;
     }

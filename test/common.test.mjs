@@ -343,3 +343,14 @@ test("envelopeMatch: finds the same audio at its offset, not different audio", (
   assert.equal(AVFX.envelopeMatch(a, { start: 1000, values: a.values.slice(0, 100) }, 150, 200, 3), null);
   assert.equal(AVFX.envelopeMatch(a, { start: 1000, values: a.values.map(() => -30) }, 150, 200, 3), null);
 });
+
+test("isLive: no end, or one no recording has (Firefox: Twitch live = 2^63 µs)", () => {
+  const { isLive, resumeTime } = loadCommon().AVFX;
+  assert.equal(isLive(Infinity), true);
+  assert.equal(isLive(NaN), true);
+  assert.equal(isLive(9223372036855), true);
+  assert.equal(isLive(3 * 3600), false);
+  // a saved place in a Firefox live stream is never continued
+  assert.equal(resumeTime({ t: 1800, d: 9223372036855 }, 9223372036855, 0.5), null);
+  assert.equal(resumeTime({ t: 1800, d: 3600 }, 3600, 0.5), 1798);
+});

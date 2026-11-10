@@ -108,7 +108,7 @@ function renderTimeline() {
       return;
     }
     const d = st.duration;
-    const seekable = Number.isFinite(d) && d > 0;
+    const seekable = !AVFX.isLive(d) && d > 0;
     bar.disabled = !seekable;
     state.textContent = t(st.paused ? "paused" : "playing");
     // Real time won by skipping pauses, from 1 s on
@@ -120,7 +120,7 @@ function renderTimeline() {
       bar.value = st.time;
       time.textContent = `${fmt(st.time)} / ${fmt(d)}`;
     } else {
-      time.textContent = Number.isFinite(d) ? fmt(st.time) : `${fmt(st.time)} · ${t("live")}`;
+      time.textContent = AVFX.isLive(d) ? `${fmt(st.time)} · ${t("live")}` : fmt(st.time);
     }
     // A-B loop region under the bar
     loop.hidden = !seekable || st.loopA === null;

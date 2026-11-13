@@ -2,6 +2,13 @@
 
 Edits audio and video on any website in real time – YouTube, Twitch, media libraries, embedded players and more.
 
+## Install
+
+- **Firefox** (desktop and Android): [Klangbild on addons.mozilla.org](https://addons.mozilla.org/firefox/addon/klangbild/)
+- **Chrome** (and other Chromium browsers): [Klangbild in the Chrome Web Store](https://chromewebstore.google.com/detail/jbenejgplajofobmhpjgfnjhgdnojogi)
+
+To build it yourself, see [Installation (development)](#installation-development).
+
 ## Features
 
 **Playback**
